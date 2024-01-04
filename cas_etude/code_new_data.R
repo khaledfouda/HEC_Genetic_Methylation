@@ -98,9 +98,13 @@ X = readRDS("new_data/Xdat_common.rds")
 N = ncol(Y)
 K = nrow(Y)
 methyl = Y
-k_star = (1:K)[-c(3,40)]
-n_star = sort(unique(c(round(seq(1,N,length.out=round(N*0.9))))))
-X = X[,c(2)]
+k_star = (1:K)[-c(1:10,30:40)]
+n_star = sort(unique(c(round(seq(1,N,length.out=round(N*0.6))))))
+X = X[,c(1)] %>% fact2mat()
 
 
 methyl_func(methyl, sites, k_star, n_star, X, NULL)
+
+
+range(Y)
+apply(Y,1, function(y) sum(y==0))
