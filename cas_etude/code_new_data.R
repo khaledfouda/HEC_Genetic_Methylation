@@ -38,7 +38,7 @@ N = ncol(Y)
 K = nrow(Y)
 methyl = Y
 k_star = (1:K)[-c(1,9)]
-Y_mean = apply(Y,2,mean)
+#Y_mean = apply(Y,2,mean)
 X = fact2mat(X1)
 
 
@@ -92,3 +92,17 @@ res
 
 
 
+#-----------------------
+Y = readRDS("new_data/Ydat_common.rds")
+X = readRDS("new_data/Xdat_common.rds") 
+N = ncol(Y)
+K = nrow(Y)
+X = select(X, AGE)
+methyl = Y
+k_star = (1:K)[-c(3,40)]
+n_star = sort(unique(c(round(seq(1,N,length.out=round(N*0.9))))))
+
+
+
+
+methyl_func(methyl, sites, k_star, n_star, X, NULL)

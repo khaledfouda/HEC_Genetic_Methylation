@@ -14,7 +14,7 @@ library(readr)
 library(magrittr)
 library(skimr)
 library(feather)
-
+select <- dplyr::select
 wgbs_file1 <- './new_data/Gene_data/AML_BM_bp27_meth_methCpG.bed'
 wgbs_file2 <- './new_data/Gene_data/TCD8_term_bp174_meth_methCpG.bed'
 
@@ -47,42 +47,45 @@ transform_age <- function(age) {
 }
 gene_data_folder <- 'new_data/Gene_data/'
 #---------------------------------------------------------------
-
-dat.info.full <- read_tsv("./new_data/samples.tsv", show_col_types = FALSE)
-
-dat.info.full %>%  
-   select(sampleGroup, cellTypeShort, DONOR_ID, DONOR_AGE, DONOR_HEALTH_STATUS, DONOR_SEX,
-          DISEASE, CELL_TYPE, TISSUE_TYPE,bedFile) %>%
-   mutate(bedFile = paste0(gene_data_folder, bedFile)) %>%
-   mutate(featherFile = sapply(bedFile, function(x) paste0(strsplit(x, "\\.")[[1]][1],".feather"))) %>%
-   mutate(across(-c(DONOR_AGE,bedFile, featherFile), as.factor)) %>%
-   mutate(DONOR_AGE = sapply(DONOR_AGE, transform_age)) %>%
-   filter(! is.na(DONOR_AGE)) ->
-   dat.info
-
-skimr::skim(dat.info)
-#--------------------------------------------------------------
-XY.ratio <- function(seqnames){
-   XY.count = as.character(seqnames[seqnames %in%  c("chrX", "chrY")]) %>% table()
-   return(round(XY.count[1]/XY.count[2]))
-}
-#---------------------------------------------------------------------------------------
-i = 13
-dat.info$XY.ratio = NA
-
-for(i in 1:nrow(dat.info)){
-   print(i)   
-   gene.dat <- import.bed(dat.info$bedFile[i]) %>% as.data.frame()
-   dat.info$XY.ratio[i] = XY.ratio(gene.dat$seqnames)
-   print(paste0( "end = start - 1? ", all(gene.dat %>% mutate(diff = (start - end)) %>% select(diff) == -1),
-          ", # width != 2 is ", sum(gene.dat$width-2),
-          ", X/Y = ", dat.info$XY.ratio[i]))
+run.the.slow.code = FALSE
+if(run.the.slow.code == TRUE){
+      
+   dat.info.full <- read_tsv("./new_data/samples.tsv", show_col_types = FALSE)
    
-   gene.chr1 <- gene.dat %>% filter(seqnames == "chr1") %>% select(start, score)
-   write_feather(gene.chr1, dat.info$featherFile[i])
-   print("...")
+   dat.info.full %>%  
+      select(sampleGroup, cellTypeShort, DONOR_ID, DONOR_AGE, DONOR_HEALTH_STATUS, DONOR_SEX,
+             DISEASE, CELL_TYPE, TISSUE_TYPE,bedFile) %>%
+      mutate(bedFile = paste0(gene_data_folder, bedFile)) %>%
+      mutate(featherFile = sapply(bedFile, function(x) paste0(strsplit(x, "\\.")[[1]][1],".feather"))) %>%
+      mutate(across(-c(DONOR_AGE,bedFile, featherFile), as.factor)) %>%
+      mutate(DONOR_AGE = sapply(DONOR_AGE, transform_age)) %>%
+      filter(! is.na(DONOR_AGE)) ->
+      dat.info
+   
+   skimr::skim(dat.info)
+   #--------------------------------------------------------------
+   XY.ratio <- function(seqnames){
+      XY.count = as.character(seqnames[seqnames %in%  c("chrX", "chrY")]) %>% table()
+      return(round(XY.count[1]/XY.count[2]))
+   }
+   #---------------------------------------------------------------------------------------
+   dat.info$XY.ratio = NA
+   for(i in 1:nrow(dat.info)){
+      print(i)   
+      gene.dat <- import.bed(dat.info$bedFile[i]) %>% as.data.frame()
+      dat.info$XY.ratio[i] = XY.ratio(gene.dat$seqnames)
+      print(paste0( "end = start - 1? ", all(gene.dat %>% mutate(diff = (start - end)) %>% select(diff) == -1),
+             ", # width != 2 is ", sum(gene.dat$width-2),
+             ", X/Y = ", dat.info$XY.ratio[i]))
+      
+      gene.chr1 <- gene.dat %>% filter(seqnames == "chr1") %>% select(start, score)
+      write_feather(gene.chr1, dat.info$featherFile[i])
+      print("...")
+   }
+   saveRDS(dat.info, "new_data/sample_info.rds")
 }
-saveRDS(dat.info, "new_data/sample_info.rds")
+#-----------------------------------------------------------------------------
+dat.info = readRDS("new_data/sample_info.rds")
 #------------------------------------------------------------------------------
 X.dat <- 
    dat.info %>% 
@@ -121,7 +124,7 @@ round((lengths - mean(lengths))/ 1000  )
 N = length(common_positions)
 m = length(position_list_2M)
 print(N)
-X.dat_common = X.dat %>% filter(length > 2e6)
+X.dat_common = X.dat %>% filter(length > 2e6) %>% mutate(length = (length - mean(length))/sd(length) )
 # My Y data will be a matrix 
 Y.dat_common <- matrix(NA, nrow = m, ncol = N)
 for(i in 1:nrow(X.dat_common)){
@@ -131,7 +134,7 @@ for(i in 1:nrow(X.dat_common)){
       Y.dat_common[i,]
 }
 Y.dat_common = Y.dat_common / 1000
-saveRDS(X.dat_common, "new_data/Xdat_common.rds")
+saveRDS(as.matrix(select(X.dat_common,-CH1_FILE)), "new_data/Xdat_common.rds")
 saveRDS(Y.dat_common, "new_data/Ydat_common.rds")
 #---------------------------------------------------------------------------------
 # Y2.1 :  Merge chromosomes together with different positions but ordered! Take the first non-NA sub-matrix
@@ -139,7 +142,7 @@ saveRDS(Y.dat_common, "new_data/Ydat_common.rds")
 lengths = unlist(lapply(position_list, length)) %>% sort
 N = min(lengths)
 m = length(position_list)
-X.dat_ordered1 = X.dat
+X.dat_ordered1 = X.dat %>% mutate(length = (length - mean(length))/sd(length) )
 Y.dat_ordered1 = matrix(NA, nrow = m, ncol = N)
 for(i in 1:nrow(X.dat_ordered1)){
    (read_feather(X.dat_ordered1$CH1_FILE[i]) %>%
@@ -147,7 +150,7 @@ for(i in 1:nrow(X.dat_ordered1)){
       Y.dat_ordered1[i,]
 }
 Y.dat_ordered1 = Y.dat_ordered1 / 1000
-saveRDS(X.dat_ordered1, "new_data/Xdat_ordered1.rds")
+saveRDS(as.matrix(select(X.dat_ordered1,-CH1_FILE)), "new_data/Xdat_ordered1.rds")
 saveRDS(Y.dat_ordered1, "new_data/Ydat_ordered1.rds")
 #------------------------------------------------------------------------------------------------------
 # Y2.2 :  Merge chromosomes together with different positions but ordered! Take the first non-NA sub-matrix
@@ -155,7 +158,7 @@ saveRDS(Y.dat_ordered1, "new_data/Ydat_ordered1.rds")
 lengths = unlist(lapply(position_list_2M, length)) %>% sort
 N = min(lengths)
 m = length(position_list_2M)
-X.dat_ordered2 = X.dat_common
+X.dat_ordered2 = X.dat_common %>% mutate(length = (length - mean(length))/sd(length) )
 Y.dat_ordered2 = matrix(NA, nrow = m, ncol = N)
 for(i in 1:nrow(X.dat_ordered2)){
    (read_feather(X.dat_ordered2$CH1_FILE[i]) %>%
@@ -163,9 +166,11 @@ for(i in 1:nrow(X.dat_ordered2)){
       Y.dat_ordered2[i,]
 }
 Y.dat_ordered2 = Y.dat_ordered2 / 1000
-saveRDS(X.dat_ordered2, "new_data/Xdat_ordered2.rds")
+saveRDS(as.matrix(select(X.dat_ordered2,-CH1_FILE)), "new_data/Xdat_ordered2.rds")
 saveRDS(Y.dat_ordered2, "new_data/Ydat_ordered2.rds")
 #------------------------------------------------------------------------------------------------------
+# END
+#######################
 gene.chr1$start %>% range()
 
 #---------------------------------------------------------------------------------
