@@ -86,7 +86,7 @@ for ( i in 1:4){
   }
   res[[i]] = methyl_func(methyl, sites, k_star, n_star, X,ind_na_sub)
   save(res, file = "data/res_dmr_1e6_bis.Rdata")
-}
+}  
 
 res
 

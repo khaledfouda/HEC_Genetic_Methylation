@@ -46,8 +46,14 @@ __packages
 *.rda
 *.RDA
 *.Rda
+.Rhistory
+*.rds
+*.Rds
 
-# ignore figures
+# ignore gene data
+*.bed
+*.idat
+*.feather
 
 # ignore saved data folder
 */saved_data/

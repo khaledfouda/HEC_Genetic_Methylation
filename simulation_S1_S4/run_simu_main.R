@@ -1,5 +1,7 @@
 #setwd("~/Library/Mobile Documents/com~apple~CloudDocs/MacDoc/PostDocHecUqam/code_article_lm/simulations")
 
+setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/simulation_S1_S4/")
+
 library(mvmeta)
 library(Jmisc)
 library(Rcpp)
@@ -26,10 +28,6 @@ K = 100
 k_star = c(11:K)
 
 method = 1:2
-
-
-
-
 
 #### S1 ####
 

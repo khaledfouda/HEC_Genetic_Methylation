@@ -1,3 +1,6 @@
+setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude/")
+
+
 library(DiceEval)
 library(knitr)
 library(kableExtra)
@@ -36,7 +39,8 @@ kbl(tabl, booktabs = T, format = "latex",row.names = T) %>%
 
 
 
-
+tabl
+# the following file does not exist.
 data = fread("data/descr_sample_methyl.csv")
 tabl = data[,c(2,3,5,6)]
 kbl(tabl, booktabs = T, format = "latex",row.names = T)
