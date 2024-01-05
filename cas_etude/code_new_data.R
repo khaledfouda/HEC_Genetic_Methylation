@@ -93,18 +93,41 @@ res
 
 
 #-----------------------
-Y = readRDS("new_data/Ydat_common.rds")
-X = readRDS("new_data/Xdat_common.rds") 
-N = ncol(Y)
-K = nrow(Y)
-methyl = Y
-k_star = (1:K)[-c(1:10,30:40)]
-n_star = sort(unique(c(round(seq(1,N,length.out=round(N*0.6))))))
-X = X[,c(1)] %>% fact2mat()
+Ynew = readRDS("new_data/Ydat_common.rds")
+Xnew = readRDS("new_data/Xdat_common.rds") 
+Nnew = ncol(Ynew)
+Knew = nrow(Ynew)
+methyl.new = Ynew
+k_star.new = (1:Knew)[-c(1,9)]
+n_star.new = sort(unique(c(round(seq(1,Nnew,length.out=round(Nnew*0.90))))))
+#Xnew = Xnew[,c(1)] %>% fact2mat()
+sites.new = scale_01(1:Nnew)
 
 
-methyl_func(methyl, sites, k_star, n_star, X, NULL)
+methyl_func(methyl.new, sites.new, k_star.new, n_star.new, Xnew, NULL)
 
 
 range(Y)
 apply(Y,1, function(y) sum(y==0))
+
+apply(Ynew[1:13,],1, function(y) sum(y==0))
+
+
+
+# 1M - 90% N*
+#             RMSE        R2 RMSE_sub R2_sub    time
+# ols_gasp 0.1167959 0.8598460      NaN    NaN 109.427
+# gasp     0.1074292 0.8814245      NaN    NaN  98.403
+# null     0.1512797 0.7648680      NaN    NaN   1.129
+#------------------------------------------------------------------------------
+# all data; 99% N*
+# RMSE        R2 RMSE_sub R2_sub    time
+# ols_gasp 0.1462965 0.7349718      NaN    NaN 771.050
+# gasp     0.1284976 0.7955373      NaN    NaN 732.916
+# null     0.1388718 0.7611900      NaN    NaN  17.198
+#-----------------------------------------------------------------------------
+
+
+
+
+
