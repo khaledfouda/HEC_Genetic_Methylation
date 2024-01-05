@@ -112,6 +112,9 @@ k_star.new <-
   filter(row_number() != 1) %>% 
   ungroup())$index  
   
+
+Xnew <- as.matrix( sample(0:1, Knew, replace=TRUE))
+
 methyl_func(methyl.new, sites.new, k_star.new, n_star.new, Xnew, NULL)
 
 
@@ -141,8 +144,10 @@ apply(Ynew[1:13,],1, function(y) sum(y==0))
 # null     0.1388924 0.7612711      NaN    NaN   17.396
 #-----------------------------------------------------------------------------
 # all data; 90% N* ; K* all but 6 rows chosen by selecting one row of possible combination
-
-
+# RMSE        R2 RMSE_sub R2_sub     time
+# ols_gasp 0.09973562 0.8765287      NaN    NaN 1840.185
+# gasp     0.08447753 0.9114175      NaN    NaN 1599.213
+# null     0.11277985 0.8421195      NaN    NaN   16.692
 #-----------------------------------------------------------------------------
-
+# same as previous but with no covariates (i passed a single dummy covariate)
 
