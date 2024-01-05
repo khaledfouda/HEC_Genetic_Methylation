@@ -94,16 +94,24 @@ res
 
 #-----------------------
 Ynew = readRDS("new_data/Ydat_common.rds")
-Xnew = readRDS("new_data/Xdat_common.rds") 
+Xnew = readRDS("new_data/Xdat_common.rds") %>%
+  as.data.frame() %>% 
+  mutate(AGE = (AGE - mean(AGE))/ sd(AGE) ) %>% 
+  as.matrix()
 Nnew = ncol(Ynew)
 Knew = nrow(Ynew)
 methyl.new = Ynew
-k_star.new = (1:Knew)[-c(1,9)]
 n_star.new = sort(unique(c(round(seq(1,Nnew,length.out=round(Nnew*0.90))))))
-#Xnew = Xnew[,c(1)] %>% fact2mat()
 sites.new = scale_01(1:Nnew)
 
-
+k_star.new <-
+  (Xnew %>%
+  as.data.frame() %>%
+  mutate(index = 1:n()) %>%  
+  group_by(MALE, AML, APL, BONE_MARROW) %>% 
+  filter(row_number() != 1) %>% 
+  ungroup())$index  
+  
 methyl_func(methyl.new, sites.new, k_star.new, n_star.new, Xnew, NULL)
 
 
@@ -126,8 +134,15 @@ apply(Ynew[1:13,],1, function(y) sum(y==0))
 # gasp     0.1284976 0.7955373      NaN    NaN 732.916
 # null     0.1388718 0.7611900      NaN    NaN  17.198
 #-----------------------------------------------------------------------------
+# all data; 90% N* ; K* all but 1 & 9; same as above too
+# RMSE        R2 RMSE_sub R2_sub     time
+# ols_gasp 0.1140599 0.8390043      NaN    NaN 1732.309
+# gasp     0.1055445 0.8621460      NaN    NaN 1591.633
+# null     0.1388924 0.7612711      NaN    NaN   17.396
+#-----------------------------------------------------------------------------
+# all data; 90% N* ; K* all but 6 rows chosen by selecting one row of possible combination
 
 
-
+#-----------------------------------------------------------------------------
 
 
