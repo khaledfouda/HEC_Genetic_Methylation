@@ -45,7 +45,7 @@ saveRDS(adjusted_p_values, "new_data/adjusted_p_values.rds")
 significance_threshold = -log10(0.05 / 1381622) 
    #mutate(Category = ifelse(log10(p_values) < significance_threshold, "Significant", "Not Significant"))
 
-data.frame(x = 1:N, Site= sites, NegLogP = - log10(adjusted_p_values)) ->
+data.frame(x = 1:N, Site= sites, NegLogP = - log10(p_values)) ->
    manh.dat
 manh.dat %>% 
    ggplot(aes(Site, NegLogP)) +
@@ -54,11 +54,15 @@ manh.dat %>%
    theme_minimal() +
    xlab("Methylation Site") +
    ylab("-log10(Adjusted P-value)") +
+   geom_hline(yintercept = significance_threshold, linetype = "dashed", color = "red")+
    #scale_x_continuous(breaks = manh.dat$x, labels = manh.dat$sites)  +
    ggtitle("Manhattan Plot of Methylation Sites") -> p 
    
 p
 ggsave(filename = "manhattan_plot.png", plot = p, width = 10, height = 6, dpi = 300)
+
+range(p_values,na.rm = T)
+
 
 wherenais = which(is.na(p_values))
 length(wherenais)
