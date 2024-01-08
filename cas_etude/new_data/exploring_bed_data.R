@@ -15,10 +15,14 @@ library(magrittr)
 library(skimr)
 library(feather)
 select <- dplyr::select
-#wgbs_file1 <- './new_data/Gene_data/AML_BM_bp27_meth_methCpG.bed'
+
+# test file
+wgbs_file1 <- './new_data/Gene_data/AML_BM_bp27_meth_methCpG.bed'
+df.test <- import.bed(wgbs_file1) %>% as.data.frame()
+
+table(df.test$seqnames) %>% as.data.frame() %>% arrange(desc(Freq)) 
 #wgbs_file2 <- './new_data/Gene_data/TCD8_term_bp174_meth_methCpG.bed'
 
-#df <- import.bed(wgbs_file2) %>% as.data.frame()
 # take chr1 as a subset
 #table(df$seqnames)
 
@@ -42,9 +46,12 @@ transform_age <- function(age) {
    return(mean(age_range))
 }
 
+chromosome_to_retain = "chr2"
 gene_data_folder <- 'new_data/Gene_data/'
+skip_check = TRUE
+skip_sex = FALSE
 #---------------------------------------------------------------
-run.the.slow.code = FALSE
+run.the.slow.code = TRUE
 if(run.the.slow.code == TRUE){
       
    dat.info.full <- read_tsv("./new_data/samples.tsv", show_col_types = FALSE)
@@ -53,7 +60,7 @@ if(run.the.slow.code == TRUE){
       select(sampleGroup, cellTypeShort, DONOR_ID, DONOR_AGE, DONOR_HEALTH_STATUS, DONOR_SEX,
              DISEASE, CELL_TYPE, TISSUE_TYPE,bedFile) %>%
       mutate(bedFile = paste0(gene_data_folder, bedFile)) %>%
-      mutate(featherFile = sapply(bedFile, function(x) paste0(strsplit(x, "\\.")[[1]][1],".feather"))) %>%
+      mutate(featherFile = sapply(bedFile, function(x) strsplit(x, "\\.")[[1]][1])) %>%
       mutate(across(-c(DONOR_AGE,bedFile, featherFile), as.factor)) %>%
       mutate(DONOR_AGE = sapply(DONOR_AGE, transform_age)) %>%
       filter(! is.na(DONOR_AGE)) ->
@@ -70,13 +77,15 @@ if(run.the.slow.code == TRUE){
    for(i in 1:nrow(dat.info)){
       print(i)   
       gene.dat <- import.bed(dat.info$bedFile[i]) %>% as.data.frame()
-      dat.info$XY.ratio[i] = XY.ratio(gene.dat$seqnames)
-      print(paste0( "end = start - 1? ", all(gene.dat %>% mutate(diff = (start - end)) %>% select(diff) == -1),
+      if(skip_sex == FALSE)
+         dat.info$XY.ratio[i] = XY.ratio(gene.dat$seqnames)
+      if(skip_check == FALSE)
+         print(paste0( "end = start - 1? ", all(gene.dat %>% mutate(diff = (start - end)) %>% select(diff) == -1),
              ", # width != 2 is ", sum(gene.dat$width-2),
              ", X/Y = ", dat.info$XY.ratio[i]))
       
-      gene.chr1 <- gene.dat %>% filter(seqnames == "chr1") %>% select(start, score)
-      write_feather(gene.chr1, dat.info$featherFile[i])
+      gene.chr <- gene.dat %>% filter(seqnames == chromosome_to_retain) %>% select(start, score)
+      write_feather(gene.chr, paste0(dat.info$featherFile[i],"_",chromosome_to_retain,"_.feather"))
       print("...")
    }
    saveRDS(dat.info, "new_data/sample_info.rds")

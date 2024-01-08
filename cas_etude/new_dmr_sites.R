@@ -49,7 +49,7 @@ data.frame(x = 1:N, Site= sites, NegLogP = - log10(p_values)) ->
    manh.dat
 manh.dat %>% 
    ggplot(aes(Site, NegLogP)) +
-   geom_point(alpha = 0.9) +
+   geom_point(alpha = 0.6) +
    #scale_color_manual(values = c("Significant" = "red", "Not Significant" = "blue")) +
    theme_minimal() +
    xlab("Methylation Site") +
@@ -58,8 +58,8 @@ manh.dat %>%
    #scale_x_continuous(breaks = manh.dat$x, labels = manh.dat$sites)  +
    ggtitle("Manhattan Plot of Methylation Sites") -> p 
    
-p
 ggsave(filename = "manhattan_plot.png", plot = p, width = 10, height = 6, dpi = 300)
+#p
 
 range(p_values,na.rm = T)
 
