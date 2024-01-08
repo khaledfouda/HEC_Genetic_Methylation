@@ -22,6 +22,7 @@ X = readRDS("new_data/Xdat_common.rds") %>%
    as.data.frame() #%>% 
    #mutate(AGE = (AGE - mean(AGE))/ sd(AGE) ) %>% 
    #as.matrix()
+sites = readRDS("new_data/sites_common.rds")
 N = ncol(Y)
 K = nrow(Y)
 #--------------------------------
@@ -41,15 +42,22 @@ adjusted_p_values <- p.adjust(p_values, method = "bonferroni", n = length(p_valu
 saveRDS(p_values, "new_data/p_values.rds")
 saveRDS(adjusted_p_values, "new_data/adjusted_p_values.rds")
 #-------------------------------------------------------------
-manh.dat <- data.frame(Site=1:N, NegLogP = - log10(adjusted_p_values))
+significance_threshold = -log10(0.05 / 1381622) 
+   #mutate(Category = ifelse(log10(p_values) < significance_threshold, "Significant", "Not Significant"))
 
-manh.dat %>% ggplot(aes(Site, NegLogP)) +
+data.frame(x = 1:N, Site= sites, NegLogP = - log10(adjusted_p_values)) ->
+   manh.dat
+manh.dat %>% 
+   ggplot(aes(x, NegLogP)) +
    geom_point(alpha = 0.6) +
-   theme_minimal() +
+   #scale_color_manual(values = c("Significant" = "red", "Not Significant" = "blue")) +
+   theme_bw() +
    xlab("Methylation Site") +
    ylab("-log10(Adjusted P-value)") +
+   #scale_x_continuous(breaks = manh.dat$x, labels = manh.dat$sites)  +
    ggtitle("Manhattan Plot of Methylation Sites") -> p 
    
+p
 ggsave(filename = "manhattan_plot.png", plot = p, width = 10, height = 6, dpi = 300)
 
 wherenais = which(is.na(p_values))
