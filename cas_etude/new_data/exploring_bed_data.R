@@ -96,7 +96,7 @@ if(run.the.slow.code == TRUE){
 dat.info = readRDS("new_data/sample_info.rds")
 run.the.second.slow.code = TRUE
 skip_other_parts = TRUE
-chromosome = "chr3"
+chromosome = "chr7"
 cut_off = 1e6
 #------------------------------------------------------------------------------
 if(run.the.second.slow.code == TRUE){
@@ -108,7 +108,7 @@ if(run.the.second.slow.code == TRUE){
                 AML = (DISEASE %in% c("Acute myeloid leukemia", "Acute Myeloid Leukemia")) + 0,
                 APL = (DISEASE == "Acute promyelocytic leukemia" ) + 0,
                 BONE_MARROW = (TISSUE_TYPE == "Bone marrow") + 0,
-                CH1_FILE = paste0(featherFile,"",chromosome,".feather") ) 
+                CH1_FILE = paste0(featherFile,"_",chromosome,"_.feather") ) 
    #-------------------------------------------------------------------------------
    # I need a list of common positions in Chromosome 1 for all patients.
    position_list = list()
@@ -147,9 +147,9 @@ if(run.the.second.slow.code == TRUE){
          Y.dat_common[i,]
    }
    Y.dat_common = Y.dat_common / 1000
-   saveRDS(sort(common_positions), paste0("new_data/sites_common_chr1",chromosome,".rds"))
-   saveRDS(as.matrix(select(X.dat_common,-CH1_FILE)), paste0("new_data/Xdat_common_chr1",chromosome,".rds"))
-   saveRDS(Y.dat_common, paste0("new_data/Ydat_common_chr1",chromosome,".rds"))
+   saveRDS(sort(common_positions), paste0("new_data/sites_common_",chromosome,".rds"))
+   saveRDS(as.matrix(select(X.dat_common,-CH1_FILE)), paste0("new_data/Xdat_common_",chromosome,".rds"))
+   saveRDS(Y.dat_common, paste0("new_data/Ydat_common_",chromosome,".rds"))
    #---------------------------------------------------------------------------------
    if(skip_other_parts == FALSE){
       
