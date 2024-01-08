@@ -20,7 +20,7 @@ select <- dplyr::select
 #wgbs_file1 <- './new_data/Gene_data/AML_BM_bp27_meth_methCpG.bed'
 #df.test <- import.bed(wgbs_file1) %>% as.data.frame()
 
-#table(df.test$seqnames) %>% as.data.frame() %>% arrange(desc(Freq)) 
+#table(df.test$seqnames) %>% as.data.frame() %>% arrange(desc(Var1)) 
 #wgbs_file2 <- './new_data/Gene_data/TCD8_term_bp174_meth_methCpG.bed'
 
 # take chr1 as a subset
@@ -46,7 +46,7 @@ transform_age <- function(age) {
    return(mean(age_range))
 }
 
-chromosome_to_retain = paste0("chr", 4:7)
+chromosome_to_retain = paste0("chr", c(8:12,17))
 gene_data_folder <- 'new_data/Gene_data/'
 skip_check = TRUE
 skip_sex = FALSE
@@ -98,6 +98,8 @@ run.the.second.slow.code = TRUE
 skip_other_parts = TRUE
 chromosome = "chr7"
 cut_off = 1e6
+for(chromosome in chromosome_to_retain){
+   
 #------------------------------------------------------------------------------
 if(run.the.second.slow.code == TRUE){
    X.dat <- 
@@ -185,6 +187,7 @@ if(run.the.second.slow.code == TRUE){
       saveRDS(as.matrix(select(X.dat_ordered2,-CH1_FILE)), "new_data/Xdat_ordered2.rds")
       saveRDS(Y.dat_ordered2, "new_data/Ydat_ordered2.rds")
    }
+}
 }
 #------------------------------------------------------------------------------------------------------
 # END
