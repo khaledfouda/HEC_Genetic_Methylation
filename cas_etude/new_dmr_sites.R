@@ -15,24 +15,14 @@ library(corrplot)
 source("methyl_func.R")
 sourceAll(path="../functions/")
 
+chromosome = "chr3"
 
-Y1 = readRDS("new_data/Ydat_common_chr1.rds")
-X1 = readRDS("new_data/Xdat_common_chr1.rds") %>% as.data.frame() #%>% 
-sites1 = readRDS("new_data/sites_common_chr1.rds")
+for(chromosome in paste0("chr",1:7)){
+Y = readRDS(paste0("new_data/Ydat_common_",chromosome,".rds"))
+X = readRDS(paste0("new_data/Xdat_common_",chromosome,".rds")) %>% as.data.frame() #%>% 
+sites = readRDS(paste0("new_data/sites_common_",chromosome,".rds"))
 
-Y2 = readRDS("new_data/Ydat_common_chr2.rds")
-X2 = readRDS("new_data/Xdat_common_chr2.rds") %>% as.data.frame() #%>% 
-sites2 = readRDS("new_data/sites_common_chr2.rds")
-all(X1[,1:4]==X2[,1:4])
-Y = cbind(Y1,Y2)
-sites = c(sites1, sites2)
-sites_order = order(sites)
-Y = Y[,sites_order]
-sites = sites[sites_order]
-X=X1
 dim(Y)
-   #mutate(AGE = (AGE - mean(AGE))/ sd(AGE) ) %>% 
-   #as.matrix()
 N = ncol(Y)
 K = nrow(Y)
 #--------------------------------
@@ -66,38 +56,41 @@ manh.dat %>%
    ylab("-log10(Adjusted P-value)") +
    geom_hline(yintercept = significance_threshold, linetype = "dashed", color = "red")+
    #scale_x_continuous(breaks = manh.dat$x, labels = manh.dat$sites)  +
-   ggtitle("Manhattan Plot of Methylation Sites") -> p 
+   ggtitle(paste0("Chromosome ",strsplit(chromosome,"chr")[[1]][2])) -> p 
    
-ggsave(filename = "manhattan_plot_chr1_chr2.png", plot = p, width = 10, height = 6, dpi = 300)
-p
- 
-range(p_values,na.rm = T) 
+ggsave(filename = paste0("manhattan_plot_",chromosome, ".png"), plot = p, width = 10, height = 6, dpi = 300)
+}
 
 
-wherenais = which(is.na(p_values))
-length(wherenais)
-length(p_values)
-#-------------------------------------------------------
-
-model <- lm(Y[, 1] ~ X$AGE)
-summary(model)$coefficients["X$AGE", "Pr(>|t|)"]
-
-
-p.adjust(c(.1,.05,.3), method="bonferroni", n=3)
-
-N
-
-n_star.new = sort(unique(c(round(seq(1,Nnew,length.out=round(Nnew*0.90))))))
-sites.new = scale_01(1:Nnew)
-
-k_star.new <-
-   (Xnew %>%
-       as.data.frame() %>%
-       mutate(index = 1:n()) %>%  
-       group_by(MALE, AML, APL, BONE_MARROW) %>% 
-       filter(row_number() != 1) %>% 
-       ungroup())$index  
-
-
-
-
+# p
+#  
+# range(p_values,na.rm = T) 
+# 
+# 
+# wherenais = which(is.na(p_values))
+# length(wherenais)
+# length(p_values)
+# #-------------------------------------------------------
+# 
+# model <- lm(Y[, 1] ~ X$AGE)
+# summary(model)$coefficients["X$AGE", "Pr(>|t|)"]
+# 
+# 
+# p.adjust(c(.1,.05,.3), method="bonferroni", n=3)
+# 
+# N
+# 
+# n_star.new = sort(unique(c(round(seq(1,Nnew,length.out=round(Nnew*0.90))))))
+# sites.new = scale_01(1:Nnew)
+# 
+# k_star.new <-
+#    (Xnew %>%
+#        as.data.frame() %>%
+#        mutate(index = 1:n()) %>%  
+#        group_by(MALE, AML, APL, BONE_MARROW) %>% 
+#        filter(row_number() != 1) %>% 
+#        ungroup())$index  
+# 
+# 
+# 
+# 
