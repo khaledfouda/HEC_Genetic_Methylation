@@ -48,10 +48,10 @@ significance_threshold = -log10(0.05 / 1381622)
 data.frame(x = 1:N, Site= sites, NegLogP = - log10(adjusted_p_values)) ->
    manh.dat
 manh.dat %>% 
-   ggplot(aes(x, NegLogP)) +
-   geom_point(alpha = 0.6) +
+   ggplot(aes(Site, NegLogP)) +
+   geom_point(alpha = 0.9) +
    #scale_color_manual(values = c("Significant" = "red", "Not Significant" = "blue")) +
-   theme_bw() +
+   theme_minimal() +
    xlab("Methylation Site") +
    ylab("-log10(Adjusted P-value)") +
    #scale_x_continuous(breaks = manh.dat$x, labels = manh.dat$sites)  +
