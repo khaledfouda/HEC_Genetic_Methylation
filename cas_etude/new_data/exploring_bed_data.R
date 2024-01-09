@@ -50,10 +50,18 @@ chromosome_to_retain = paste0("chr", c(8:12,17))
 gene_data_folder <- 'new_data/Gene_data/'
 skip_check = TRUE
 skip_sex = FALSE
+save_all_chromosomes = TRUE
 #---------------------------------------------------------------
 run.the.slow.code = TRUE
-if(run.the.slow.code == TRUE){
-      
+#if(run.the.slow.code == TRUE){
+
+transform_raw_to_feather <- function(chromosome_to_retain = NULL, 
+                                     skip_sex = TRUE,
+                                     skip_check = TRUE,
+                                     gene_data_folder='new_data/Gene_data/',
+                                     save_all_chromosomes = FALSE
+                                     ){
+         
    dat.info.full <- read_tsv("./new_data/samples.tsv", show_col_types = FALSE)
    
    dat.info.full %>%  
@@ -66,7 +74,7 @@ if(run.the.slow.code == TRUE){
       filter(! is.na(DONOR_AGE)) ->
       dat.info  
    
-   skimr::skim(dat.info)
+   #skimr::skim(dat.info)
    #--------------------------------------------------------------
    XY.ratio <- function(seqnames){
       XY.count = as.character(seqnames[seqnames %in%  c("chrX", "chrY")]) %>% table()
@@ -84,15 +92,24 @@ if(run.the.slow.code == TRUE){
              ", # width != 2 is ", sum(gene.dat$width-2),
              ", X/Y = ", dat.info$XY.ratio[i]))
       
-      for(chromosome in chromosome_to_retain){
-         gene.dat %>% filter(seqnames == chromosome) %>% select(start, score) %>% 
-            write_feather(path=paste0(dat.info$featherFile[i],"_",chromosome,"_.feather"))
+      if(save_all_chromosomes == TRUE){
+         gene.dat %>% select(seqnames, start, score) %>% 
+            write_feather(path=paste0(dat.info$featherFile[i],"_ALL_.feather"))
+      }else{
+         for(chromosome in chromosome_to_retain){
+            gene.dat %>% filter(seqnames == chromosome) %>% select(start, score) %>% 
+               write_feather(path=paste0(dat.info$featherFile[i],"_",chromosome,"_.feather"))
+         }
       }
       print("...")
    }
-   saveRDS(dat.info, "new_data/sample_info.rds")
+   if(skip_sex == FALSE) 
+      saveRDS(dat.info, "new_data/sample_info.rds")
+   print("DONE.")
 }
 #-----------------------------------------------------------------------------
+transform_raw_to_feather(save_all_chromosomes = TRUE)
+#---------------------------------------------------------------------------
 dat.info = readRDS("new_data/sample_info.rds")
 run.the.second.slow.code = TRUE
 skip_other_parts = TRUE
@@ -101,7 +118,16 @@ cut_off = 1e6
 for(chromosome in chromosome_to_retain){
    
 #------------------------------------------------------------------------------
-if(run.the.second.slow.code == TRUE){
+#if(run.the.second.slow.code == TRUE){
+
+combine_feathers_to_rds <- function( chromosome = NULL,
+                                    dat.info= readRDS("new_data/sample_info.rds"),
+                                    skip_other_parts=TRUE,
+                                    cut_off = 1e6,
+                                    save_all_chromosomes = FALSE
+                                    ){
+   if(save_all_chromosomes == TRUE) chromosome = "ALL"
+   
    X.dat <- 
       dat.info %>% 
       transmute(SAMPLE_ID = 1:nrow(dat.info),
@@ -114,8 +140,15 @@ if(run.the.second.slow.code == TRUE){
    #-------------------------------------------------------------------------------
    # I need a list of common positions in Chromosome 1 for all patients.
    position_list = list()
+   chromosome_list = list()
+   
    X.dat$length = NA
    for(i in 1:nrow(X.dat)){
+      feath.file = read_feather(X.dat$CH1_FILE[i])
+      position_list[[i]] <- feath.file$start
+      if(chromosome == "ALL")
+         chromosome_list[[i]] <- position_list[[i]]
+      
       position_list[[i]] <- read_feather(X.dat$CH1_FILE[i])$start
       X.dat$length[i] <- length(position_list[[i]])
    }
