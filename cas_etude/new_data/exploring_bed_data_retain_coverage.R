@@ -26,7 +26,15 @@ select <- dplyr::select
 # take chr1 as a subset
 #table(df$seqnames)
 
+df.test$width[5]
+df.test[1:5,]
+as.integer(strsplit(strsplit(df.test$name, "'")[[1]][2],"/")[[1]])
 
+cov.meth = strsplit(trimws(df.test$name,whitespace = '\''),'/') 
+Meth = sapply(cov.meth, function(x) as.integer(x[1])) 
+Cov =  sapply(cov.meth, function(x) as.integer(x[2]))
+
+Meth <- mutate(df.test, Meth = as.integer(strsplit(trimws(name,whitespace = '\''),'/')[[1]][1]))
 
 # Extracting methylation values
 #df$site <- paste(df$seqnames, df$start, df$end, sep = "_")
@@ -50,38 +58,26 @@ XY.ratio <- function(seqnames){
    return(round(XY.count[1]/XY.count[2]))
 }
 #---------------------------------------------------------------------------------------
-
-chromosome_to_retain = paste0("chr", c(8:12,17))
-gene_data_folder <- 'new_data/Gene_data/'
-skip_check = TRUE
-skip_sex = FALSE
-save_all_chromosomes = TRUE
-#---------------------------------------------------------------
-run.the.slow.code = TRUE
-#if(run.the.slow.code == TRUE){
-
-transform_raw_to_feather <- function(chromosome_to_retain = NULL, 
+transform_raw_to_feather_2 <- function(chromosome_to_retain = NULL, 
                                      skip_sex = TRUE,
                                      skip_check = TRUE,
                                      gene_data_folder='new_data/Gene_data/',
                                      save_all_chromosomes = FALSE
                                      ){
          
-   dat.info.full <- read_tsv("./new_data/samples.tsv", show_col_types = FALSE)
-   
-   dat.info.full %>%  
+   dat.info <-
+      read_tsv("./new_data/samples.tsv", show_col_types = FALSE) %>% 
       select(sampleGroup, cellTypeShort, DONOR_ID, DONOR_AGE, DONOR_HEALTH_STATUS, DONOR_SEX,
              DISEASE, CELL_TYPE, TISSUE_TYPE,bedFile) %>%
       mutate(bedFile = paste0(gene_data_folder, bedFile)) %>%
       mutate(featherFile = sapply(bedFile, function(x) strsplit(x, "\\.")[[1]][1])) %>%
       mutate(across(-c(DONOR_AGE,bedFile, featherFile), as.factor)) %>%
       mutate(DONOR_AGE = sapply(DONOR_AGE, transform_age)) %>%
-      filter(! is.na(DONOR_AGE)) ->
-      dat.info  
+      mutate(XY.ratio = NA) %>% 
+      filter(! is.na(DONOR_AGE))
    
    #skimr::skim(dat.info)
    #--------------------------------------------------------------
-   dat.info$XY.ratio = NA
    for(i in 1:nrow(dat.info)){
       print(i)   
       gene.dat <- import.bed(dat.info$bedFile[i]) %>% as.data.frame()
@@ -93,12 +89,14 @@ transform_raw_to_feather <- function(chromosome_to_retain = NULL,
              ", X/Y = ", dat.info$XY.ratio[i]))
       
       if(save_all_chromosomes == TRUE){
+         print("isn't implemented yet")
+         return()
          gene.dat %>% select(seqnames, start, score) %>% 
             write_feather(path=paste0(dat.info$featherFile[i],"_ALL_.feather"))
       }else{
          for(chromosome in chromosome_to_retain){
-            gene.dat %>% filter(seqnames == chromosome) %>% select(start, score) %>% 
-               write_feather(path=paste0(dat.info$featherFile[i],"_",chromosome,"_.feather"))
+            gene.dat %>% filter(seqnames == chromosome) %>% select(start, name) %>% 
+               write_feather(path=paste0(dat.info$featherFile[i],"_",chromosome,"_v2.feather"))
          }
       }
       print("...")
@@ -108,25 +106,20 @@ transform_raw_to_feather <- function(chromosome_to_retain = NULL,
    print("DONE.")
 }
 #-----------------------------------------------------------------------------
-transform_raw_to_feather(save_all_chromosomes = TRUE)
+chromosome_to_retain = paste0("chr", c(7,8,11,12,17))
+transform_raw_to_feather_2(chromosome_to_retain)
 #---------------------------------------------------------------------------
-dat.info = readRDS("new_data/sample_info.rds")
-run.the.second.slow.code = TRUE
-skip_other_parts = TRUE
-chromosome = "chr7"
-cut_off = 1e6
-for(chromosome in chromosome_to_retain){
-   
-#------------------------------------------------------------------------------
-#if(run.the.second.slow.code == TRUE){
-
-combine_feathers_to_rds <- function( chromosome = NULL,
+combine_feathers_to_rds_2 <- function( chromosome = NULL,
                                     dat.info= readRDS("new_data/sample_info.rds"),
                                     skip_other_parts=TRUE,
                                     cut_off = 1e6,
                                     save_all_chromosomes = FALSE
                                     ){
-   if(save_all_chromosomes == TRUE) chromosome = "ALL"
+   if(save_all_chromosomes == TRUE){
+      print("isn't implemented yet")
+      return()
+      chromosome = "ALL"
+   }   
    
    X.dat <- 
       dat.info %>% 
@@ -136,7 +129,7 @@ combine_feathers_to_rds <- function( chromosome = NULL,
                 AML = (DISEASE %in% c("Acute myeloid leukemia", "Acute Myeloid Leukemia")) + 0,
                 APL = (DISEASE == "Acute promyelocytic leukemia" ) + 0,
                 BONE_MARROW = (TISSUE_TYPE == "Bone marrow") + 0,
-                CH1_FILE = paste0(featherFile,"_",chromosome,"_.feather") ) 
+                CH1_FILE = paste0(featherFile,"_",chromosome,"_v2.feather") ) 
    #-------------------------------------------------------------------------------
    # I need a list of common positions in Chromosome 1 for all patients.
    position_list = list()
@@ -144,13 +137,16 @@ combine_feathers_to_rds <- function( chromosome = NULL,
    
    X.dat$length = NA
    for(i in 1:nrow(X.dat)){
-      feath.file = read_feather(X.dat$CH1_FILE[i])
-      position_list[[i]] <- feath.file$start
       if(chromosome == "ALL")
+      {
+         feath.file = read_feather(X.dat$CH1_FILE[i])
+         position_list[[i]] <- feath.file$start
          chromosome_list[[i]] <- feath.file$seqnames
+      }else
+         position_list[[i]] <- read_feather(X.dat$CH1_FILE[i])$start
+      
       X.dat$length[i] <- length(position_list[[i]])
       
-      #position_list[[i]] <- read_feather(X.dat$CH1_FILE[i])$start
    }
    
    if(chromosome != "ALL"){
@@ -179,59 +175,36 @@ combine_feathers_to_rds <- function( chromosome = NULL,
    N = length(common_positions)
    m = length(position_list_2M)
    print(N)
-   X.dat_common = X.dat %>% mutate(length = (length - mean(length))/sd(length) )
+   X.dat = X.dat %>% mutate(length = (length - mean(length))/sd(length) )
    # My Y data will be a matrix 
-   Y.dat_common <- matrix(NA, nrow = m, ncol = N)
-   for(i in 1:nrow(X.dat_common)){
-      (read_feather(X.dat_common$CH1_FILE[i]) %>%
-         filter(start %in% common_positions) %>% 
-         arrange(start))$score ->
-         Y.dat_common[i,]
+   
+   Coverage <- matrix(NA, nrow=m, ncol = N)
+   Methylation <- matrix(NA, nrow=m, ncol = N)
+   for(i in 1:nrow(X.dat)){
+      meth.file <-   
+         read_feather(X.dat$CH1_FILE[i]) %>%
+         filter(start %in% common_positions) %>%
+         arrange(start)
+      cov.meth = strsplit(trimws(meth.file$name,whitespace = '\''),'/') 
+      Methylation[i,] = sapply(cov.meth, function(x) as.integer(x[1])) 
+      Coverage[i,] =  sapply(cov.meth, function(x) as.integer(x[2]))
    }
-   Y.dat_common = Y.dat_common / 1000
-   saveRDS(sort(common_positions), paste0("new_data/sites_common_",chromosome,".rds"))
-   saveRDS(as.matrix(select(X.dat_common,-CH1_FILE)), paste0("new_data/Xdat_common_",chromosome,".rds"))
-   saveRDS(Y.dat_common, paste0("new_data/Ydat_common_",chromosome,".rds"))
+   saveRDS(sort(common_positions), paste0("new_data/sites_",chromosome,"_v2.rds"))
+   saveRDS(as.matrix(select(X.dat,-CH1_FILE)), paste0("new_data/Xdat_",chromosome,"_v2.rds"))
+   saveRDS(Methylation, paste0("new_data/Methylation_",chromosome,"_v2.rds"))
+   saveRDS(Coverage, paste0("new_data/Coverage_",chromosome,"_v2.rds"))
    if(chromosome == "ALL")
       saveRDS(order(common_positions), paste0("new_data/chromosomes_common_",chromosome,".rds"))
    #---------------------------------------------------------------------------------
-   if(skip_other_parts == FALSE){
-      
-      # Y2.1 :  Merge chromosomes together with different positions but ordered! Take the first non-NA sub-matrix
-      # Include the two patients with short chromosome 1 (ie, length is less than 2M)
-      lengths = unlist(lapply(position_list, length)) %>% sort
-      N = min(lengths)
-      m = length(position_list)
-      X.dat_ordered1 = X.dat %>% mutate(length = (length - mean(length))/sd(length) )
-      Y.dat_ordered1 = matrix(NA, nrow = m, ncol = N)
-      for(i in 1:nrow(X.dat_ordered1)){
-         (read_feather(X.dat_ordered1$CH1_FILE[i]) %>%
-             arrange(start))$score[1:N] ->
-            Y.dat_ordered1[i,]
-      }
-      Y.dat_ordered1 = Y.dat_ordered1 / 1000
-      saveRDS(as.matrix(select(X.dat_ordered1,-CH1_FILE)), "new_data/Xdat_ordered1.rds")
-      saveRDS(Y.dat_ordered1, "new_data/Ydat_ordered1.rds")
-      #------------------------------------------------------------------------------------------------------
-      # Y2.2 :  Merge chromosomes together with different positions but ordered! Take the first non-NA sub-matrix
-      # consider chromosomes with more than 2M genes (ie, exclude two subjects)
-      lengths = unlist(lapply(position_list_2M, length)) %>% sort
-      N = min(lengths)
-      m = length(position_list_2M)
-      X.dat_ordered2 = X.dat_common %>% mutate(length = (length - mean(length))/sd(length) )
-      Y.dat_ordered2 = matrix(NA, nrow = m, ncol = N)
-      for(i in 1:nrow(X.dat_ordered2)){
-         (read_feather(X.dat_ordered2$CH1_FILE[i]) %>%
-             arrange(start))$score[1:N] ->
-            Y.dat_ordered2[i,]
-      }
-      Y.dat_ordered2 = Y.dat_ordered2 / 1000
-      saveRDS(as.matrix(select(X.dat_ordered2,-CH1_FILE)), "new_data/Xdat_ordered2.rds")
-      saveRDS(Y.dat_ordered2, "new_data/Ydat_ordered2.rds")
-   }
-}
 }
 #------------------------------------------------------------------------------------------------------
+chromosome = "chr7"
+chromosome_to_retain = paste0("chr", c(7,8,11,12,17))
+for(chromosome in chromosome_to_retain)
+   combine_feathers_to_rds_2(chromosome)
+#------------------------------------------------------------------------------
+
+#-------------------------------------------------------------
 # END
 #######################
 # gene.chr1$start %>% range()
