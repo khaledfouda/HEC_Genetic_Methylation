@@ -31,6 +31,10 @@ for(chromosome in paste0("chr",c(8,11,12,17))){
    sites = c(sites,readRDS(paste0("new_data/sites_common_",chromosome,".rds")))
 }
 
+female_indices = X$MALE == 1
+Y = Y[female_indices,]
+X = X[female_indices,]
+
 site_order = order(sites) 
 Y = Y[,site_order]
 sites = sites[site_order]
@@ -67,10 +71,10 @@ manh.dat %>%
    ylab("-log10(Adjusted P-value)") +
    geom_hline(yintercept = significance_threshold, linetype = "dashed", color = "red")+ 
    #scale_x_continuous(breaks = manh.dat$x, labels = manh.dat$sites)  +
-   ggtitle(paste0("Chromosomes 7,8,11,12,17","; Alpha=0.1")) -> p 
+   ggtitle(paste0("Chromosomes 7,8,11,12,17; Male","; Alpha=0.1")) -> p 
 
-ggsave(filename = paste0("./graphs/manhattan_plot_7_8_11_12_17_", ".png"),
-       plot = p, width = 10, height = 6, dpi = 300)
+ggsave(filename = paste0("./graphs/manhattan_plot_7_8_11_12_17_Male", ".png"),
+       plot = p, width = 10, height = 6, dpi = 300) 
 
 
 #------------------------
@@ -105,7 +109,7 @@ for(chromosome in paste0("chr",c(7,8,11,12,17))){
    
    data.frame(x = 1:N, Site= sites, NegLogP = - log10(p_values)) ->
       manh.dat
-   manh.dat %>% 
+   manh.dat %>%  
       ggplot(aes(Site, NegLogP)) +  
       geom_point(alpha = 0.6) +
       #scale_color_manual(values = c("Significant" = "red", "Not Significant" = "blue")) +

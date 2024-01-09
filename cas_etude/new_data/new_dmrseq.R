@@ -31,6 +31,10 @@ sites = sites[site_order]
 chr = chr[site_order]
 table(chr)
 
+female_indices = X$MALE==1
+Methylation = Methylation[,female_indices]
+Coverage = Coverage[, female_indices]
+X = X[female_indices,]
 # Methylation = readRDS(paste0("new_data/Methylation_",chromosome,"_v2.rds")) %>% t()
 # Coverage = readRDS(paste0("new_data/Coverage_",chromosome,"_v2.rds")) %>% t()
 # sites = readRDS(paste0("new_data/sites_",chromosome,"_v2.rds"))
@@ -51,17 +55,17 @@ if(length(X$SAMPLE_ID) != ncol(Methylation) || length(X$SAMPLE_ID) != ncol(Cover
 
 bs <- BSseq(chr = chr, pos = sites,
            M = Methylation, Cov = Coverage,
-           sampleNames = X$SAMPLE_ID)  
+           sampleNames = X$SAMPLE_ID)    
 
 #rowSums(getCoverage(bs))[2]
 
-pData(bs)$AGE <- X$AGE
+pData(bs)$AGE <- X$AGE 
 bs = sort(bs)
 library(BiocParallel)
 #options(MulticoreParam=MulticoreParam(workers=4))
-param <- SnowParam(workers = 2, type = "SOCK")
+param <- SnowParam(workers = 1, type = "SOCK")
 regions <- dmrseq(bs=bs, testCovariate="AGE", cutoff = .1,chrsPerChunk =5, BPPARAM = param)     
-
+ 
  # load example data
 data(BS.chr21)
 # the covariate of interest is the 'CellType' column of pData(BS.chr21)
