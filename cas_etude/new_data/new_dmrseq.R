@@ -8,15 +8,38 @@ chromosome = "chr7"
 print(chromosome)
 #for(chromosome in paste0("chr",c(8:12,17))){
 
+chromosome = "chr7"
+X = readRDS(paste0("new_data/Xdat_chr7_v2.rds")) %>% as.data.frame() #%>% 
 Methylation = readRDS(paste0("new_data/Methylation_",chromosome,"_v2.rds")) %>% t()
 Coverage = readRDS(paste0("new_data/Coverage_",chromosome,"_v2.rds")) %>% t()
-X = readRDS(paste0("new_data/Xdat_",chromosome,"_v2.rds")) %>% as.data.frame() #%>% 
 sites = readRDS(paste0("new_data/sites_",chromosome,"_v2.rds"))
+chr = rep(chromosome, nrow(Methylation))
+
+for(chromosome in paste0("chr",c(8,11,12,17))){
+   print(chromosome)
+   Methylation = rbind(Methylation,t(readRDS(paste0("new_data/Methylation_",chromosome,"_v2.rds"))))
+   Coverage = rbind(Coverage,t(readRDS(paste0("new_data/Coverage_",chromosome,"_v2.rds"))))
+   chr = c(chr,rep(chromosome, nrow(Methylation)-length(sites) ))
+   sites = c(sites,readRDS(paste0("new_data/sites_",chromosome,"_v2.rds")))
+   
+}
+
+site_order = order(sites) 
+Methylation = Methylation[site_order,]
+Coverage = Coverage[site_order,]
+sites = sites[site_order]
+chr = chr[site_order]
+table(chr)
+
+# Methylation = readRDS(paste0("new_data/Methylation_",chromosome,"_v2.rds")) %>% t()
+# Coverage = readRDS(paste0("new_data/Coverage_",chromosome,"_v2.rds")) %>% t()
+# sites = readRDS(paste0("new_data/sites_",chromosome,"_v2.rds"))
+# X = readRDS(paste0("new_data/Xdat_",chromosome,"_v2.rds")) %>% as.data.frame() #%>% 
 
 dim(Methylation)
 N = nrow(Methylation)
 K = ncol(Methylation)
-chr = rep(chromosome, N)
+# chr = rep(chromosome, N)
 
 if(length(chr) != nrow(Methylation) || length(sites) != nrow(Coverage)) {
    stop("Number of rows in Methylation and Coverage must match the length of chr and sites.")
@@ -24,17 +47,20 @@ if(length(chr) != nrow(Methylation) || length(sites) != nrow(Coverage)) {
 if(length(X$SAMPLE_ID) != ncol(Methylation) || length(X$SAMPLE_ID) != ncol(Coverage)) {
    stop("Number of columns in Methylation and Coverage must match the length of X$SAMPLE_ID.")
 }
-
+ 
 
 bs <- BSseq(chr = chr, pos = sites,
            M = Methylation, Cov = Coverage,
            sampleNames = X$SAMPLE_ID)  
 
-rowSums(getCoverage(bs))[2]
+#rowSums(getCoverage(bs))[2]
 
-pData(bs)$AGE <- X$MALE
-
-regions <- dmrseq(bs=bs, testCovariate="AGE", cutoff = .8)     
+pData(bs)$AGE <- X$AGE
+bs = sort(bs)
+library(BiocParallel)
+#options(MulticoreParam=MulticoreParam(workers=4))
+param <- SnowParam(workers = 2, type = "SOCK")
+regions <- dmrseq(bs=bs, testCovariate="AGE", cutoff = .1,chrsPerChunk =5, BPPARAM = param)     
 
  # load example data
 data(BS.chr21)
