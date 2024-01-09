@@ -17,7 +17,7 @@ sourceAll(path="../functions/")
 
 chromosome = "chr3"
 
-for(chromosome in paste0("chr",c(8:12,17))){
+for(chromosome in paste0("chr",c(7,8,11,12,17))){
    print(chromosome)
    Y = readRDS(paste0("new_data/Ydat_common_",chromosome,".rds"))
    X = readRDS(paste0("new_data/Xdat_common_",chromosome,".rds")) %>% as.data.frame() #%>% 
@@ -53,19 +53,21 @@ for(chromosome in paste0("chr",c(8:12,17))){
       geom_point(alpha = 0.6) +
       #scale_color_manual(values = c("Significant" = "red", "Not Significant" = "blue")) +
       theme_minimal() +
+      scale_x_continuous(limits=c(0,2e8))+
       xlab("Methylation Site") +
       ylab("-log10(Adjusted P-value)") +
       geom_hline(yintercept = significance_threshold, linetype = "dashed", color = "red")+
       #scale_x_continuous(breaks = manh.dat$x, labels = manh.dat$sites)  +
-      ggtitle(paste0("Chromosome ",strsplit(chromosome,"chr")[[1]][2])) -> p 
+      ggtitle(paste0("Chromosome ",strsplit(chromosome,"chr")[[1]][2], ", Alpha=0.1")) -> p 
       
-   ggsave(filename = paste0("manhattan_plot_",chromosome, ".png"), plot = p, width = 10, height = 6, dpi = 300)
+   ggsave(filename = paste0("./graphs/manhattan_plot_",chromosome, ".png"),
+          plot = p, width = 10, height = 6, dpi = 300)
 }
 
 
 # p
 #  
-# range(p_values,na.rm = T) 
+# range(p_values,na.rm = T)  
 # 
 # 
 # wherenais = which(is.na(p_values))

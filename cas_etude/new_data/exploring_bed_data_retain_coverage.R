@@ -186,8 +186,8 @@ combine_feathers_to_rds_2 <- function( chromosome = NULL,
          filter(start %in% common_positions) %>%
          arrange(start)
       cov.meth = strsplit(trimws(meth.file$name,whitespace = '\''),'/') 
-      Methylation[i,] = sapply(cov.meth, function(x) as.integer(x[1])) 
-      Coverage[i,] =  sapply(cov.meth, function(x) as.integer(x[2]))
+      Methylation[i,] = as.integer(sapply(cov.meth, function(x) x[1])) 
+      Coverage[i,] =  as.integer(sapply(cov.meth, function(x) x[2]))
    }
    saveRDS(sort(common_positions), paste0("new_data/sites_",chromosome,"_v2.rds"))
    saveRDS(as.matrix(select(X.dat,-CH1_FILE)), paste0("new_data/Xdat_",chromosome,"_v2.rds"))
@@ -201,7 +201,7 @@ combine_feathers_to_rds_2 <- function( chromosome = NULL,
 chromosome = "chr7"
 chromosome_to_retain = paste0("chr", c(7,8,11,12,17))
 for(chromosome in chromosome_to_retain)
-   combine_feathers_to_rds_2(chromosome)
+   combine_feathers_to_rds_2(chromosome) 
 #------------------------------------------------------------------------------
 
 #-------------------------------------------------------------
