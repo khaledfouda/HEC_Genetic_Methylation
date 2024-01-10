@@ -30,6 +30,10 @@ selec = c(1:2, 4:9, 12:14, 16:19)
 Y = Y[selec, ]
 colnames(Y) = rownames(Y) = NULL
 X1 = c(rep("Gifford", 8), rep("roadmap1", 7))
+hist(Index_seq)
+range(Index_seq)
+max(Index_seq) - min(Index_seq)
+sort(Index_seq)[1:10]
 
 sites = scale_01(Index_seq[ind])
 

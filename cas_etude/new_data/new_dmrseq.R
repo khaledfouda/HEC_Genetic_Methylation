@@ -64,7 +64,7 @@ bs = sort(bs)
 library(BiocParallel)
 #options(MulticoreParam=MulticoreParam(workers=4))
 param <- SnowParam(workers = 1, type = "SOCK")
-regions <- dmrseq(bs=bs, testCovariate="AGE", cutoff = .1,chrsPerChunk =5, BPPARAM = param)     
+regions <- dmrseq(bs=bs, testCovariate="AGE", cutoff = .5,chrsPerChunk =1, BPPARAM = param)     
  
  # load example data
 data(BS.chr21)

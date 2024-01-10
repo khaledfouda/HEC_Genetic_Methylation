@@ -31,9 +31,9 @@ for(chromosome in paste0("chr",c(8,11,12,17))){
    sites = c(sites,readRDS(paste0("new_data/sites_common_",chromosome,".rds")))
 }
 
-female_indices = X$MALE == 1
-Y = Y[female_indices,]
-X = X[female_indices,]
+#female_indices = X$MALE == 1
+#Y = Y[female_indices,]
+#X = X[female_indices,]
 
 site_order = order(sites) 
 Y = Y[,site_order]
@@ -44,18 +44,19 @@ N = ncol(Y)
 K = nrow(Y)
 #--------------------------------
 library(parallel)
-no_cores <- 7               #detectCores() - 1  # Leave one core free for system processes
+no_cores <- 12               #detectCores() - 1  # Leave one core free for system processes
 cl <- makeCluster(no_cores)
 
 Age = X$AGE
 clusterExport(cl, varlist = c("Y", "Age"))
 
 p_values <- parSapply(cl, 1:ncol(Y), function(i) {
-   model <- lm(Y[, i] ~ Age)
+   model <- lm(Y[, i] ~ Age) 
    summary(model)$coefficients["Age", "Pr(>|t|)"]
 }) 
 stopCluster(cl)
-adjusted_p_values <- p.adjust(p_values, method = "bonferroni", n = length(p_values))  
+#saveRDS(p_values, "new_data/p_values_7_8_11_12_17.rds")
+#adjusted_p_values <- p.adjust(p_values, method = "bonferroni", n = length(p_values))  
 #-------------------------------------------------------------
 significance_threshold = -log10(0.1 / N) 
 
@@ -69,14 +70,20 @@ manh.dat %>%
    #scale_x_continuous(limits=c(0,2e8))+
    xlab("Methylation Site") +
    ylab("-log10(Adjusted P-value)") +
+   geom_hline(yintercept = -log10(0.05/N), linetype = "dashed", color = "red")+ 
    geom_hline(yintercept = significance_threshold, linetype = "dashed", color = "red")+ 
+   geom_hline(yintercept = -log10(0.2/N), linetype = "dashed", color = "red")+ 
    #scale_x_continuous(breaks = manh.dat$x, labels = manh.dat$sites)  +
-   ggtitle(paste0("Chromosomes 7,8,11,12,17; Male","; Alpha=0.1")) -> p 
+   ggtitle(paste0("Chromosomes 7; Male","; Alpha=0.1")) -> p 
 
-ggsave(filename = paste0("./graphs/manhattan_plot_7_8_11_12_17_Male", ".png"),
+ggsave(filename = paste0("./graphs/manhattan_plot_7_Male", ".png"),
        plot = p, width = 10, height = 6, dpi = 300) 
 
 
+which(p_values < (.2/N))
+length(which(p_values < (0.2/N)))
+length(p_values)
+sites[]
 #------------------------
 for(chromosome in paste0("chr",c(7,8,11,12,17))){
    print(chromosome)

@@ -17,14 +17,31 @@ library(feather)
 select <- dplyr::select
 
 # test file
-#wgbs_file1 <- './new_data/Gene_data/AML_BM_bp27_meth_methCpG.bed'
-#df.test <- import.bed(wgbs_file1) %>% as.data.frame()
+BiocManager::install("ShortRead")
+wgbs_file1 <- '../tmp/GSM1204463_BiSeq_cpgMethylation_BioSam_1500_HepG2_304072.BiSeq.bed'
+df.test <- import.bed(wgbs_file1) %>% as.data.frame()
 
-#table(df.test$seqnames) %>% as.data.frame() %>% arrange(desc(Var1)) 
+table(df.test$seqnames) %>% as.data.frame() %>% arrange(desc(Var1)) 
+filter(df.test, seqnames == "chr7")$start -> tmp1
+filter(df.test, seqnames == "chr8")$start -> tmp2
+filter(df.test, seqnames == "chr1")$start -> tmp3
+par(mfrow=c(3,1))
+hist(tmp1)
+hist(tmp2)
+inters <- Reduce(intersect, list(tmp1, tmp2))
+hist(inters)
 #wgbs_file2 <- './new_data/Gene_data/TCD8_term_bp174_meth_methCpG.bed'
-
+length(inters)
+length(tmp1)
 # take chr1 as a subset
 #table(df$seqnames)
+range(tmp1)
+sort(tmp3)[1:20]
+Reduce(intersect, list(tmp3, Index_seq)) -> tmp4
+length(Index_seq) - length(tmp4)
+
+filter(df.test, start == 96)
+min(df.test$start)
 
 df.test$width[5]
 df.test[1:5,]
