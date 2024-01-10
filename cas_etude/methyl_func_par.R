@@ -2,17 +2,21 @@ methyl_func_parallel <- function(methyl,sites,k_star,n_star,X, ind_na_sub = NULL
 
   
   
-  #----------------------------------------------------------
-  Y_obs = methyl
-  Y_obs[k_star, n_star] = NA
+    #----------------------------------------------------------
   Y = methyl
-  ind_na = is.na(Y_obs)
+  #methyl = methyl
+  methyl[k_star, n_star] = NA
+  ind_na = is.na(methyl)
   Y_mean = apply(Y, 2, mean)
+  force(Y)
+  force(methyl)
+  force(ind_na)
+  force(Y_mean)
   #-----------------------------------------------------------------------
   tasks = list(
     ols_gasp = function() {
       time = system.time({
-        obj_ols_gasp = test_ols_gasp(Y_obs, sites, X)
+        obj_ols_gasp = test_ols_gasp(methyl, sites, X)
         obj_ols_gasp = fit_ols_gasp(obj_ols_gasp)
         Y_ols_gasp = pred_fgasp(obj_ols_gasp)
         Y_ols_gasp[Y_ols_gasp < 0] = 0
@@ -22,7 +26,7 @@ methyl_func_parallel <- function(methyl,sites,k_star,n_star,X, ind_na_sub = NULL
     },
     gasp = function() {
       time = system.time({
-        obj_gasp =  fit_fgasp(Y_obs, sites)
+        obj_gasp =  fit_fgasp(methyl, sites)
         Y_gasp = pred_fgasp(obj_gasp)
         Y_gasp[Y_gasp < 0] = 0
         Y_gasp[Y_gasp > 1] = 1
@@ -30,16 +34,18 @@ methyl_func_parallel <- function(methyl,sites,k_star,n_star,X, ind_na_sub = NULL
       list(Y = Y_gasp, time = time)
     },
     null = function() {
-      time = system.time({Y_null = apply(Y_obs,2,function(x) {
+      time = system.time({Y_null = apply(methyl,2,function(x) {
         x[is.na(x)] = mean(x,na.rm=T) 
         return(x)
       })})[3]
       list(Y = Y_null, time =time)
     }
   )
+  force(tasks)
   #-----------------------------------------------------
   inner_cl <- makeCluster(3)
   registerDoParallel(inner_cl)
+  
   nothing = clusterEvalQ(inner_cl, {
     require(Jmisc)
     require(Jmisc)
@@ -56,7 +62,8 @@ methyl_func_parallel <- function(methyl,sites,k_star,n_star,X, ind_na_sub = NULL
     sourceAll(path="../functions/")
   })
   #print("hi")
-  clusterExport(inner_cl, c("Y_obs", "Y", "sites", "X", "ind_na_sub", "tasks", "ind_na", "Y_mean","scaled_sites"))
+  clusterExport(inner_cl, c("sites", "methyl", "Y", "X", "ind_na_sub", "ind_na", "Y_mean"))
+  #clusterExport(inner_cl, c("methyl", "Y", "sites", "X", "ind_na_sub", "ind_na", "Y_mean"))
                             #"test_ols_gasp","fit_ols_gasp", "pred_fgasp", "fit_fgasp", 
   #print("hi2")
   results <- foreach(task = iter(tasks)) %dopar% {
@@ -87,6 +94,3 @@ methyl_func_parallel <- function(methyl,sites,k_star,n_star,X, ind_na_sub = NULL
   
   return(tab_res)
 }
-
-
-system.time({results=methyl_func_parallel(Y,scaled_sites,k_star,n_star_list[[1]], X,NULL)})
