@@ -20,20 +20,24 @@ chromosome = "chr3"
 
 #---------------
 # combined
-Y = readRDS(paste0("new_data/Ydat_common_chr7",".rds"))
-X = readRDS(paste0("new_data/Xdat_common_chr7",".rds")) %>% as.data.frame() #%>% 
-sites = readRDS(paste0("new_data/sites_common_chr7",".rds"))
+chromosome = "chr8"
+run_p_values_plot("chr12")
+run_p_values_plot("chr17")
+run_p_values_plot <- function(chromosome){
+Y = readRDS(paste0("new_data/Ydat_common_",chromosome,".rds"))
+X = readRDS(paste0("new_data/Xdat_common_",chromosome,".rds")) %>% as.data.frame() #%>% 
+sites = readRDS(paste0("new_data/sites_common_",chromosome,".rds"))
 
-for(chromosome in paste0("chr",c(8,11,12,17))){
-   print(chromosome)
-   Y = cbind(Y, readRDS(paste0("new_data/Ydat_common_",chromosome,".rds")))
-   #X = readRDS(paste0("new_data/Xdat_common_",chromosome,".rds")) %>% as.data.frame() #%>% 
-   sites = c(sites,readRDS(paste0("new_data/sites_common_",chromosome,".rds")))
-}
+# for(chromosome in paste0("chr",c(8,11,12,17))){
+#    print(chromosome)
+#    Y = cbind(Y, readRDS(paste0("new_data/Ydat_common_",chromosome,".rds")))
+#    #X = readRDS(paste0("new_data/Xdat_common_",chromosome,".rds")) %>% as.data.frame() #%>% 
+#    sites = c(sites,readRDS(paste0("new_data/sites_common_",chromosome,".rds")))
+# }
 
-#female_indices = X$MALE == 1
-#Y = Y[female_indices,]
-#X = X[female_indices,]
+female_indices = which(X$MALE == 1)
+Y = Y[female_indices,]
+X = X[female_indices,]
 
 site_order = order(sites) 
 Y = Y[,site_order]
@@ -55,18 +59,43 @@ p_values <- parSapply(cl, 1:ncol(Y), function(i) {
    summary(model)$coefficients["Age", "Pr(>|t|)"]
 }) 
 stopCluster(cl)
-#saveRDS(p_values, "new_data/p_values_7_8_11_12_17.rds")
+saveRDS(p_values, paste0("new_data/p_values_",chromosome,".rds"))
 #adjusted_p_values <- p.adjust(p_values, method = "bonferroni", n = length(p_values))  
 #-------------------------------------------------------------
 significance_threshold = -log10(0.1 / N) 
-
 data.frame(x = 1:N, Site= sites, NegLogP = - log10(p_values)) ->
    manh.dat
+#---------------------------------------------------------------------
+signf.p <- which(p_values < (.1/N))
+#length(p_values)
+#sites[signf.p]
+#sites[which(p_values < (0.2/N))]
+
+get_dmr_regions <- function(p_values, N, alpha=0.1, floor_by=1e7, min_freq=2, return_seq=FALSE){
+   as.data.frame(table(floor(sites[which(p_values < (alpha/N))] / floor_by) * floor_by)) %>%
+      arrange(desc(Freq)) %>%
+      filter(Freq >= min_freq) -> results
+   if(return_seq == TRUE){
+      values = as.numeric(as.character(results$Var1)) 
+      sequen = c()
+      for(x in values) sequen = c(sequen, x:(x+1e7))
+      return(sequen)
+   }
+   return(results)
+}
+
+#get_dmr_regions(p_values, N, 0.05, min_freq = 2, return_seq = T)
+#get_dmr_regions(p_values, N, 0.1)
+#get_dmr_regions(p_values, N, 0.2)
+dmr_regions = get_dmr_regions(p_values, N, 0.05, min_freq = 1, return_seq = T)
+manh.dat %<>% mutate(color = ifelse(Site %in% dmr_regions,"DMR","Not DMR"))
+#--------------------------------------------------------------------
+
 manh.dat %>% 
-   ggplot(aes(Site, NegLogP)) +  
+   ggplot(aes(Site, NegLogP, color=color, fill=color)) +  
    geom_point(alpha = 0.6) +
-   #scale_color_manual(values = c("Significant" = "red", "Not Significant" = "blue")) +
-   theme_minimal() +
+   scale_color_manual(values = c("DMR" = "blue", "Not DMR" = "black")) +
+   #theme_minimal() +
    #scale_x_continuous(limits=c(0,2e8))+
    xlab("Methylation Site") +
    ylab("-log10(Adjusted P-value)") +
@@ -74,16 +103,11 @@ manh.dat %>%
    geom_hline(yintercept = significance_threshold, linetype = "dashed", color = "red")+ 
    geom_hline(yintercept = -log10(0.2/N), linetype = "dashed", color = "red")+ 
    #scale_x_continuous(breaks = manh.dat$x, labels = manh.dat$sites)  +
-   ggtitle(paste0("Chromosomes 7; Male","; Alpha=0.1")) -> p 
+   ggtitle(paste0("Chromosomes ",chromosome,"; Male","; Alpha=0.5")) -> p 
 
-ggsave(filename = paste0("./graphs/manhattan_plot_7_Male", ".png"),
+ggsave(filename = paste0("./graphs/manhattan_plot_",chromosome,"_Male", ".png"),
        plot = p, width = 10, height = 6, dpi = 300) 
-
-
-which(p_values < (.2/N))
-length(which(p_values < (0.2/N)))
-length(p_values)
-sites[]
+}
 #------------------------
 for(chromosome in paste0("chr",c(7,8,11,12,17))){
    print(chromosome)
