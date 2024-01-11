@@ -16,35 +16,8 @@ library(magrittr)
 library(doParallel)
 library(foreach)
 
-#source("methyl_func.R")
-#source("methyl_func_par.R")
 sourceAll(path="../functions/")
 
-# ## get data from fastgasp article
-# load("data/Methylation_level_dense_Chr1.Rda")
-# ## get identified DMR area
-# load(file = "data/area_diff.Rdata")
-# load(file = "data/area_hypo.Rdata")
-# 
-# 
-# 
-# ind = 1:1e6
-# Y = t(seq.data.chr1[ind, ])
-# selec = c(1:2, 4:9, 12:14, 16:19)
-# 
-# Y = Y[selec, ]
-# colnames(Y) = rownames(Y) = NULL
-# X1 = c(rep("Gifford", 8), rep("roadmap1", 7))
-# 
-# sites = scale_01(Index_seq[ind])
-# 
-# 
-# N = ncol(Y)
-# K = nrow(Y)
-# methyl = Y
-# k_star = (1:K)[-c(1,9)]
-# #Y_mean = apply(Y,2,mean)
-# X = fact2mat(X1)
 
 get_dmr_regions <- function(p_values, sites, N, alpha=0.1, floor_by=1e7, min_freq=2, return_seq=FALSE){
   as.data.frame(table(floor(sites[which(p_values < (alpha/N))] / floor_by) * floor_by)) %>%
@@ -60,56 +33,11 @@ get_dmr_regions <- function(p_values, sites, N, alpha=0.1, floor_by=1e7, min_fre
 }
 
 
-#### set n_star ####
-# 
-# area_all = c(area_diff,area_hypo)
-# 
-# ### 50 % of DMR area are taken
-# dmr_50_random = sort(unlist(lapply(area_all,function(x){
-#   sample(x,round(length(x)*0.5))
-# })))
-# dmr_50_random = which(ind %in% dmr_50_random )
-# 
-# ### all DMR
-# ind_dmr = sort(unique(unlist(area_all)))
-# ind_dmr = which(ind %in% ind_dmr )
-# 
-# 
-# 
-# n_star_list = list(sort(unique(c(round(seq(1,N,length.out=round(N*0.9)))))), #scenario 1
-#                    sort(unique(c(round(seq(1,N,length.out=round(N*0.9))),dmr_50_random))), #scenario 2
-#                    sort(unique(c(round(seq(1,N,length.out=round(N*0.9))),ind_dmr))), #scenario 3
-#                    ind_dmr) #scenario 4
-# 
-# save(n_star, file = "data/n_star.Rdata")
-# 
-# sapply(n_star_list,length)/N
-# 
-# 
-# #### apply method ####
-# res = list()
-# length(res) = length(n_star_list)
-# 
-# #i=1
-# for ( i in 1:4){
-#   n_star = n_star_list[[i]]
-#   if( i == 2){
-#     ind_na_sub = dmr_50_random
-#   }else if ( i %in% c(3,4)){
-#     ind_na_sub = ind_dmr
-#   }else if ( i == 1){
-#     ind_na_sub = NULL
-#   }
-#   res[[i]] = methyl_func(methyl, sites, k_star, n_star, X,ind_na_sub)
-#   save(res, file = "data/res_dmr_1e6_bis.Rdata")
-# }  
-# 
-# res
- 
 
 #chromosome="chr12"; Age.Only=TRUE; Male.Only=TRUE;alpha=.05; min_freq=1; min_k=2;subset=1e5
 #-----------------------
-run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05, min_freq=1, min_k=2,subset=NA){
+run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05,
+                             min_freq=1, min_k=2,subset=NA, no_cores=9){
     
   setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude/")  
   Y = readRDS(paste0("new_data/Ydat_common_",chromosome,".rds"))
@@ -131,16 +59,12 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
     Y = Y[male_indices,]
     X = X[male_indices,]
   }
-  #print(dim(X))
-  
+
   N = ncol(Y)
   K = nrow(Y)
   dmr_regions = get_dmr_regions(p_values, sites, N, alpha, min_freq = min_freq, return_seq = T)
   ind_dmr = sort(which(sites %in% dmr_regions))
   sites = scale_01(sites)
-  
-  #n_star = sort(unique(c(round(seq(1,Nnew,length.out=round(Nnew*0.90))))))
-  #n_star.new = sort(c(n_star.new, ind_na_sub))
   
   
   k_star <-
@@ -158,11 +82,6 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
   if(Age.Only == TRUE){
     X = as.matrix(X[,"AGE"])
   }
-  #print(dim(X))
-  
-  #Xnew <- as.matrix( sample(0:1, Knew, replace=TRUE)) 
-  
-  #methyl_func(Ynew, sites.new, k_star.new, n_star.new, Xnew, ind_na_sub)
   
   #---------------
   n_star_list = list(sort(unique(c(round(seq(1,N,length.out=round(N*0.9)))))), #scenario 1,
@@ -171,51 +90,6 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
   
   
   
-  tasks = list(
-    ols_gasp = function(ind_na_sub) {
-      ind_na = is.na(methyl)
-      #print(dim(methyl))
-      #print(dim(X))
-      #print(length(sites))
-      time = system.time({
-        obj_ols_gasp = test_ols_gasp(methyl, sites, X)
-        obj_ols_gasp = fit_ols_gasp(obj_ols_gasp)
-        Y_pred = pred_fgasp(obj_ols_gasp)
-        Y_pred[Y_pred < 0] = 0
-        Y_pred[Y_pred > 1] = 1
-      })[3]
-      list(RMSE =RMSE(Y[ind_na],  Y_pred[ind_na]),R2 =  R2(Y[ind_na],Y_pred[ind_na]),
-           RMSE_dmr =RMSE(Y[k_star, ind_na_sub],  Y_pred[k_star, ind_na_sub]),
-           R2_dmr =R2(Y[k_star, ind_na_sub],  Y_pred[k_star, ind_na_sub]),
-           time = time)
-    },
-    gasp = function(ind_na_sub) {
-      ind_na = is.na(methyl)
-      time = system.time({
-        obj_gasp =  fit_fgasp(methyl, sites)
-        Y_pred = pred_fgasp(obj_gasp)
-        Y_pred[Y_pred < 0] = 0
-        Y_pred[Y_pred > 1] = 1
-      })[3]
-      list(RMSE =RMSE(Y[ind_na],  Y_pred[ind_na]),R2 =  R2(Y[ind_na],Y_pred[ind_na]),
-           RMSE_dmr =RMSE(Y[k_star, ind_na_sub],  Y_pred[k_star, ind_na_sub]),
-           R2_dmr =R2(Y[k_star, ind_na_sub],  Y_pred[k_star, ind_na_sub]),
-           time = time)
-    },
-    null = function(ind_na_sub) {
-      ind_na = is.na(methyl)
-      time = system.time({Y_pred = apply(methyl,2,function(x) {
-        x[is.na(x)] = mean(x,na.rm=T) 
-        return(x)
-      })})[3]
-      list(RMSE =RMSE(Y[ind_na],  Y_pred[ind_na]),R2 =  R2(Y[ind_na],Y_pred[ind_na]),
-           RMSE_dmr =RMSE(Y[k_star, ind_na_sub],  Y_pred[k_star, ind_na_sub]),
-           R2_dmr =R2(Y[k_star, ind_na_sub],  Y_pred[k_star, ind_na_sub]),
-           time = time)
-    }
-  )
-  # Detect the number of cores
-  no_cores <- 9 #length(n_star_list) #detectCores() - 1
   cl <- makeCluster(no_cores)
   registerDoParallel(cl)
   nothing = clusterEvalQ(cl, {
@@ -230,75 +104,30 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
     require(corrplot)
     require(tidyverse)
     require(magrittr)
-    #source("methyl_func.R")
     sourceAll(path="../functions/")
   })
+  print(dim(Y))
   print(length(n_star_list[[1]]))
   print(length(n_star_list[[2]]))
   print(length(n_star_list[[3]]))
   print(dim(X))
   print(length(k_star))
-  # nothing = clusterEvalQ(cl, {
-  #   library(Jmisc)
-  #   source("methyl_func_par.R")
-  #   sourceAll(path="../functions/")
-  # })
-  #clusterExport(cl, c("methyl_func", "Y", "sites", "k_star", "X", "ind_dmr", "n_star_list"))
   
-  # res <- parLapply(cl, 1:3, function(i) {
-  #   n_star <- n_star_list[[i]]
-  #   ind_na_sub <- ifelse(i == 1, NULL, ind_dmr)
-  #   methyl = Y
-  #   methyl_func_parallel(methyl, sites, k_star, n_star, X, ind_na_sub)
-  # })
   methyl = Y
- # clusterExport(cl, c( "X", "k_star", "Y"))
   results <- foreach(i = 1:9) %dopar% {
-    if(i %in% c(1,4,7) ){
-      ind_na_sub = NULL
-    }else ind_na_sub = ind_dmr
     if(i %in% 1:3){
       n_star <- n_star_list[[1]]
-      # if(i == 1){
-      #   ind_na_sub = NULL
-      # }else ind_na_sub = ind_dmr
-      #ind_na_sub <- ifelse(i == 1, NULL, ind_dmr)
-      Y = methyl
-      methyl[k_star, n_star] = NA
-      #ind_na = is.na(methyl)
-      Y_mean = apply(Y, 2, mean)
-      #------
-      #tasks[[i]]()
-      #r=tasks[[1]](ind_na, ind_na_sub)
-        
     }else if(i %in% 4:6){
       n_star <- n_star_list[[2]]
-      #ind_na_sub <- ifelse(i == 4, NULL, ind_dmr)  
-      Y = methyl
-      methyl[k_star, n_star] = NA
-      #ind_na = is.na(methyl)
-      Y_mean = apply(Y, 2, mean)
-      #---
-      #tasks[[i-3]]()
-      #r=tasks[[1]](ind_na, ind_na_sub)
-      
     }else{
       n_star <- n_star_list[[3]]
-      #ind_na_sub <- ifelse(i == 7, NULL, ind_dmr)
-      Y = methyl
-      methyl[k_star, n_star] = NA
-      #ind_na = is.na(methyl)
-      Y_mean = apply(Y, 2, mean)
-      #---
-      #tasks[[i-6]]()
-      #r = tasks[[1]](ind_na, ind_na_sub)
     }
     
+    methyl[k_star, n_star] = NA
+    
     if(i %in% c(1,4,7)){
+      ind_na_sub = NULL
         ind_na = is.na(methyl)
-        #print(dim(methyl))
-        #print(dim(X))
-        #print(length(sites))
         time = system.time({
           obj_ols_gasp = test_ols_gasp(methyl, sites, X)
           obj_ols_gasp = fit_ols_gasp(obj_ols_gasp)
@@ -311,6 +140,7 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
              R2_dmr =R2(Y[k_star, ind_na_sub],  Y_pred[k_star, ind_na_sub]),
              time = time)
       }else if(i %in% c(2,5,8)){
+        ind_na_sub = ind_dmr
         ind_na = is.na(methyl)
         time = system.time({
           obj_gasp =  fit_fgasp(methyl, sites)
@@ -323,6 +153,7 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
              R2_dmr =R2(Y[k_star, ind_na_sub],  Y_pred[k_star, ind_na_sub]),
              time = time)
       }else{
+        ind_na_sub = ind_dmr
         ind_na = is.na(methyl)
         time = system.time({Y_pred = apply(methyl,2,function(x) {
           x[is.na(x)] = mean(x,na.rm=T) 
@@ -358,24 +189,6 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
            results[[4]]$time, results[[5]]$time, results[[6]]$time,
            results[[7]]$time, results[[8]]$time, results[[9]]$time)
   )
-  #rownames(tab_res) = c("ols_gasp", "gasp", "null")
-  # 
-  # 
-  # tab_res = data.frame(
-  #   RMSE = c(RMSE(Y[ind_na], results[[1]]$Y[ind_na]),
-  #            RMSE(Y[ind_na], results[[2]]$Y[ind_na]),
-  #            RMSE(Y[ind_na], results[[3]]$Y[ind_na])),
-  #   R2 = c(R2(Y[ind_na], results[[1]]$Y[ind_na]),
-  #          R2(Y[ind_na], results[[2]]$Y[ind_na]),
-  #          R2(Y[ind_na], results[[3]]$Y[ind_na])),
-  #   RMSE_sub = c(RMSE(Y[k_star, ind_na_sub], results[[1]]$Y[k_star, ind_na_sub]),
-  #                RMSE(Y[k_star, ind_na_sub], results[[2]]$Y[k_star, ind_na_sub]),
-  #                RMSE(Y[k_star, ind_na_sub], results[[3]]$Y[k_star, ind_na_sub])),
-  #   R2_sub = c(R2(Y[k_star, ind_na_sub], results[[1]]$Y[k_star, ind_na_sub]),
-  #              R2(Y[k_star, ind_na_sub], results[[2]]$Y[k_star, ind_na_sub]),
-  #              R2(Y[k_star, ind_na_sub], results[[3]]$Y[k_star, ind_na_sub])),
-  #   time = c(results[[1]]$time, results[[2]]$time, results[[3]]$time)
-  # )
   row.names(res) <- paste0(rep(paste0("Scenario_",c(1,3,4)),3),rep(c("_LMCC", "_GASP", "_NULL"),each=3))
   res$model = rep(c("LMCC", "GASP", "NULL"),each=3)
   res$scenario = rep(paste0("Scenario_",c(1,3,4)),3)
@@ -387,47 +200,13 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
   save(res, file = paste0("results/res_dmr_",chromosome,"_MaleOnly_",Male.Only,"_AgeOnly_",
                                                  Age.Only,"_",alpha,"x",min_freq,".Rdata"))
   return(res)
-  
-  # 
-  # res <- foreach(i = 1:3) %dopar% {
-  #   stopifnot(!is.null(length(sites)))
-  #   stopifnot(!is.null(length(k_star)))
-  #   stopifnot(!is.null(dim(X)))
-  #   
-  #   n_star <- n_star_list[[1]]
-  #   ind_na_sub <- ifelse(i == 1, NULL, NULL)
-  #   methyl = Y
-  #   stopifnot(!is.null(dim(methyl)))
-  #   methyl_func_parallel(methyl, sites, k_star, n_star, X, ind_na_sub)
-  # }
-  # 
-  # stopCluster(cl)
-  # print("HI")
-  # res$n_star = length(n_star)
-  # res$k_star = length(k_star)
-  # res$N = N
-  # res$K = K
-  # save(res, file = paste0("results/res_dmr_",chromosome,"_MaleOnly_",Male.Only,"_AgeOnly_",
-  #                         Age.Only,"_",alpha,"x",min_freq,".Rdata"))
-  # return(res)
 }
-res = run_model_on_chr("chr12", subset=NA, min_freq = 1)  
+
+res = run_model_on_chr("chr12", subset=NA, min_freq = 1, no_cores = 5)  
 
  
  
 res %>% arrange(scenario)
-
-scaled_sites2 <- scaled_sites
-#methyl_func_parallel(methyl = Y, sites = scaled_sites2, k_star = k_star,n_star =  n_star_list[[1]], X = X, ind_na_sub = NULL)
-
-methyl_func_parallel(Y,scaled_sites,k_star,n_star_list[[1]], X,NULL)
-
-
-
-methyl = Y; sites = scaled_sites; k_star = k_star;n_star =  n_star_list[[1]]; X = X; ind_na_sub = NULL
-length(n_star_list[[1]])
-dim(Y)
-
 
 #---
 
