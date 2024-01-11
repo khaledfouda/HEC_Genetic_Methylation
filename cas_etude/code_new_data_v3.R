@@ -54,7 +54,8 @@ get_dmr_regions <- function(p_values, sites, N, alpha=0.1, floor_by=1e7, min_fre
 #chromosome="chr12"; Age.Only=TRUE; Male.Only=TRUE;alpha=.05; min_freq=1; min_k=2;subset=1e5
 #-----------------------
 run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05,
-                             min_freq=1, min_k=2,subset=NA, no_cores=9){
+                             min_freq=1, min_k=2,subset=NA, no_cores=9,
+                             floor_by=1e7, middle_point=FALSE){
     
   setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude/")  
   Y = readRDS(paste0("new_data/Ydat_common_",chromosome,".rds"))
@@ -79,7 +80,8 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
 
   N = ncol(Y)
   K = nrow(Y)
-  dmr_regions = get_dmr_regions(p_values, sites, N, alpha, min_freq = min_freq, return_seq = T)
+  dmr_regions = get_dmr_regions(p_values, sites, N, alpha, floor_by = floor_by,
+                                min_freq = min_freq, middle_point = middle_point, return_seq = T)
   ind_dmr = sort(which(sites %in% dmr_regions))
   sites = scale_01(sites)
   
@@ -206,19 +208,14 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
                                                  Age.Only,"_",alpha,"x",min_freq,".Rdata"))
   return(res)
 }
+#-----------------------------------------------------------------------------------------------
 
-res = run_model_on_chr("chr12", subset=NA, min_freq = 1, no_cores = 5)  
+for(chr in paste0("chr",c(7,8,11,12)))
+res = run_model_on_chr(chr, subset=NA, min_freq = 1, no_cores = 9, middle_point=TRUE, floor_by=1e6,
+                       alpha=.1)  
 
-res
-
-res %>%
-  mutate(scenario = rep(paste0("Scenario_",c(1,3,4)),3)) %>% 
-  
-  arrange(scenario)
-
-
-res %>% arrange(scenario)
-
+#---------------------------------------------------------------------------------------------------
+ 
 #---
 
 
@@ -267,3 +264,26 @@ res %>% arrange(scenario)
 # gasp     0.08628881 0.8925155 0.08240335 0.9067714 386.222
 # null     0.10701049 0.8346936 0.10285006 0.8547659   8.373
 #----------------------------------------------------------------------------------
+# RMSE        R2  RMSE_dmr    R2_dmr    time model n_star miss_all scenario k_star      N  K miss_r miss_c
+# 1 0.09760188 0.8699971       NaN       NaN 396.336  LMCC 674712    0.825        1     22 749680 24   0.90   0.92
+# 2 0.09327078 0.8812789       NaN       NaN 392.516  GASP 674712    0.825        1     22 749680 24   0.90   0.92
+# 3 0.11667007 0.8142386       NaN       NaN   7.424 Naive 674712    0.825        1     22 749680 24   0.90   0.92
+# 4 0.10164926 0.8594600 0.1032892 0.8607157 217.862  LMCC 730866    0.894        3     22 749680 24   0.97   0.92
+# 5 0.09871203 0.8674647 0.1006033 0.8678655 211.302  GASP 730866    0.894        3     22 749680 24   0.97   0.92
+# 6 0.11673431 0.8146517 0.1170906 0.8210069   5.916 Naive 730866    0.894        3     22 749680 24   0.97   0.92
+# 7 0.10329761 0.8606931 0.1032976 0.8606931 507.933  LMCC 561531    0.687        4     22 749680 24   0.75   0.92
+# 8 0.10254534 0.8627148 0.1025453 0.8627148 434.452  GASP 561531    0.687        4     22 749680 24   0.75   0.92
+# 9 0.11709064 0.8210069 0.1170906 0.8210069   5.699 Naive 561531    0.687        4     22 749680 24   0.75   0.92
+#--------------
+
+# chr 17; .01; middle; 1e6;
+# RMSE        R2  RMSE_dmr    R2_dmr    time model n_star miss_all scenario k_star      N
+# 1 0.09626129 0.9007937       NaN       NaN 346.638  LMCC 660405    0.825        1     22 733783
+# 2 0.09541319 0.9025341       NaN       NaN 344.696  GASP 660405    0.825        1     22 733783
+# 3 0.11958387 0.8468980       NaN       NaN   7.652 Naive 660405    0.825        1     22 733783
+# 4 0.10647580 0.8793266 0.1113152 0.8790600 242.696  LMCC 703009    0.878        3     22 733783
+# 5 0.10451162 0.8837377 0.1105054 0.8808132 235.554  GASP 703009    0.878        3     22 733783
+# 6 0.11969288 0.8475083 0.1209823 0.8571418   5.731 Naive 703009    0.878        3     22 733783
+# 7 0.11135368 0.8789763 0.1113537 0.8789763 824.619  LMCC 426050    0.532        4     22 733783
+# 8 0.11358781 0.8740713 0.1135878 0.8740713 604.060  GASP 426050    0.532        4     22 733783
+# 9 0.12098234 0.8571418 0.1209823 0.8571418   5.613 Naive 426050    0.532        4     22 733783

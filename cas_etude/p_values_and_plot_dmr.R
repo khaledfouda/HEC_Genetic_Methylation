@@ -92,5 +92,5 @@ run_p_values_plot <- function(chromosome, load_p_values=TRUE, Male.Only=TRUE,
 }
 #------------------------
 for(chr in paste0("chr",c(7,8,12,11,17)))
-run_p_values_plot(chr, load_p_values = TRUE, alpha=0.05, min_freq=1, middle_point=TRUE, floor_by=1e6) 
+run_p_values_plot(chr, load_p_values = TRUE, alpha=0.1, min_freq=1, middle_point=TRUE, floor_by=1e6) 
 #--------------------------------------
