@@ -19,7 +19,24 @@ library(foreach)
 sourceAll(path="../functions/")
 
 
-get_dmr_regions <- function(p_values, sites, N, alpha=0.1, floor_by=1e7, min_freq=2, return_seq=FALSE){
+get_dmr_regions <- function(p_values, sites, N, alpha=0.1, floor_by=1e7, min_freq=2, return_seq=FALSE,
+                            middle_point=FALSE){
+  if(middle_point == TRUE){
+    loci = sort(sites[which(p_values < (alpha/N))])
+    if(return_seq == TRUE){
+      sequen = c()
+      step_size = round(floor_by/2)
+      end_site = 1
+      for(i in 1:length(loci)){
+        start_site = max( end_site, loci[i]-step_size)
+        end_site = loci[i] + step_size
+        sequen = c(sequen, start_site: end_site)
+      }
+      return(sequen)
+    }
+    return(loci)
+  }
+  
   as.data.frame(table(floor(sites[which(p_values < (alpha/N))] / floor_by) * floor_by)) %>%
     arrange(desc(Freq)) %>%
     filter(Freq >= min_freq) -> results
@@ -115,10 +132,13 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
   
   results <- foreach(i = 1:9, .combine = "rbind") %dopar% {
     if(i %in% 1:3){
+      ind_na_sub = NULL
       n_star <- n_star_list[[1]]
     }else if(i %in% 4:6){
+      ind_na_sub = ind_dmr
       n_star <- n_star_list[[2]]
     }else if(i %in% 7:9){
+      ind_na_sub = ind_dmr
       n_star <- n_star_list[[3]]
     }
   
@@ -126,7 +146,7 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
     methyl[k_star, n_star] <- NA
     
     if(i %in% c(1,4,7)){
-      ind_na_sub = NULL
+      
       ind_na = is.na(methyl)
       time = system.time({
           obj_ols_gasp = test_ols_gasp(methyl, sites, X)
@@ -136,12 +156,8 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
           Y_pred[Y_pred > 1] = 1
         })[3]
         model = "LMCC"
-        # out = data.frame(RMSE =RMSE(Y[ind_na],  Y_pred[ind_na]),R2 =  R2(Y[ind_na],Y_pred[ind_na]),
-        #      RMSE_dmr =RMSE(Y[k_star, ind_na_sub],  Y_pred[k_star, ind_na_sub]),
-        #      R2_dmr =  R2(Y[k_star, ind_na_sub],  Y_pred[k_star, ind_na_sub]),
-        #      time = time, Model = "LMCC", n_star = length(n_star), miss_all = round(sum(ind_na)/(N*K),3))
+        
       }else if(i %in% c(2,5,8)){
-        ind_na_sub = ind_dmr
         ind_na = is.na(methyl)
         time = system.time({
           obj_gasp =  fit_fgasp(methyl, sites)
@@ -150,12 +166,8 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
           Y_pred[Y_pred > 1] = 1
         })[3]
         model = "GASP"
-        # out = data.frame(RMSE =RMSE(Y[ind_na],  Y_pred[ind_na]),R2 =  R2(Y[ind_na],Y_pred[ind_na]),
-        #      RMSE_dmr =RMSE(Y[k_star, ind_na_sub],  Y_pred[k_star, ind_na_sub]),
-        #      R2_dmr =R2(Y[k_star, ind_na_sub],  Y_pred[k_star, ind_na_sub]),
-        #      time = time, model = "GASP", n_star = length(n_star), miss_all = round(sum(ind_na)/(N*K),3))
+
       }else if(i %in% c(3,6,9)){
-        ind_na_sub = ind_dmr
         ind_na = is.na(methyl)
         time = system.time({Y_pred = apply(methyl,2,function(x) {
           x[is.na(x)] = mean(x,na.rm=T) 
@@ -179,57 +191,23 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
     out
   }
   
-  
 
   stopCluster(cl)
 
-  print(results)
-  res = as.data.frame(results)
-  
-  #rbind(results[[1]], results[[2]], results[[3]], results[[4]],
-         #     results[[5]])
-  # res = data.frame(
-  #   RMSE = c(results[[1]]$RMSE, results[[2]]$RMSE, results[[3]]$RMSE,
-  #            results[[4]]$RMSE, results[[5]]$RMSE, results[[6]]$RMSE,
-  #            results[[7]]$RMSE, results[[8]]$RMSE, results[[9]]$RMSE),
-  #   R2 = c(results[[1]]$R2, results[[2]]$R2, results[[3]]$R2,
-  #            results[[4]]$R2, results[[5]]$R2, results[[6]]$R2,
-  #            results[[7]]$R2, results[[8]]$R2, results[[9]]$R2),
-  #   RMSE_dmr = c(results[[1]]$RMSE_dmr, results[[2]]$RMSE_dmr, results[[3]]$RMSE_dmr,
-  #          results[[4]]$RMSE_dmr, results[[5]]$RMSE_dmr, results[[6]]$RMSE_dmr,
-  #          results[[7]]$RMSE_dmr, results[[8]]$RMSE_dmr, results[[9]]$RMSE_dmr),
-  #   R2_dmr = c(results[[1]]$R2_dmr, results[[2]]$R2_dmr, results[[3]]$R2_dmr,
-  #          results[[4]]$R2_dmr, results[[5]]$R2_dmr, results[[6]]$R2_dmr,
-  #          results[[7]]$R2_dmr, results[[8]]$R2_dmr, results[[9]]$R2_dmr),
-  #   time = c(results[[1]]$time, results[[2]]$time, results[[3]]$time,
-  #          results[[4]]$time, results[[5]]$time, results[[6]]$time,
-  #          results[[7]]$time, results[[8]]$time, results[[9]]$time)
-  # )
-  
-  res = res %>%
-    #mutate(scenario = rep(paste0("Scenario_",c(1,3,4)),each=3)) %>% 
+  res = as.data.frame(results) %>%
     arrange(scenario) %>% 
-    #mutate(n_star = rep( c(length(n_star_list[[1]]),length(n_star_list[[2]]),
-    #                       length(n_star_list[[3]])),3),
            mutate(k_star = length(k_star),
            N = N, K = K) %>% 
-    mutate(
-           #model = rep(c("LMCC", "GASP", "NULL"),each=3),
-           miss_r = round(n_star/N,2),
+    mutate(miss_r = round(n_star/N,2),
            miss_c = round(k_star/K,2))
-  #row.names(res) <- paste0(rep(paste0("Scenario_",c(1,3,4)),3),rep(c("_LMCC", "_GASP", "_NULL"),each=3))
-  # res$
-  # res$k_star = length(k_star)
-  # res$N = N
-  # res$K = K
-  #res$model = rep(c("LMCC", "GASP", "NULL"),each=3)
-  #res$scenario = rep(paste0("Scenario_",c(1,3,4)),3)
+  row.names(res) <- NULL
+  print(res)
   save(res, file = paste0("results/res_dmr_",chromosome,"_MaleOnly_",Male.Only,"_AgeOnly_",
                                                  Age.Only,"_",alpha,"x",min_freq,".Rdata"))
   return(res)
 }
 
-res = run_model_on_chr("chr12", subset=1e5, min_freq = 2, no_cores = 5)  
+res = run_model_on_chr("chr12", subset=NA, min_freq = 1, no_cores = 5)  
 
 res
 
