@@ -100,6 +100,11 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
   }
   if(Age.Only == TRUE){
     X = as.matrix(X[,"AGE"])
+  }else{
+    # check for columns with single values and drop them
+    cols_to_drop <- apply(X, 2, function(x) var(x, na.rm = TRUE) == 0)
+    X <- as.matrix(X[, !cols_to_drop])
+    print(dim(X))
   }
   
   #---------------
@@ -192,12 +197,12 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
     
     out
   }
-  
+   
 
   stopCluster(cl)
 
   res = as.data.frame(results) %>%
-    arrange(scenario) %>% 
+    arrange(scenario) %>%  
            mutate(k_star = length(k_star),
            N = N, K = K) %>% 
     mutate(miss_r = round(n_star/N,2),
@@ -206,13 +211,41 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
   print(res)
   save(res, file = paste0("results/res_dmr_",chromosome,"_MaleOnly_",Male.Only,"_AgeOnly_",
                                                  Age.Only,"_",alpha,"x",min_freq,".Rdata"))
-  return(res)
+  return(res) 
 }
 #-----------------------------------------------------------------------------------------------
 
 for(chr in paste0("chr",c(7,8,11,12)))
-res = run_model_on_chr(chr, subset=NA, min_freq = 1, no_cores = 9, middle_point=TRUE, floor_by=1e6,
+res = run_model_on_chr(chr, subset=NA, min_freq = 1, no_cores = 5, middle_point=TRUE, floor_by=1e6,
                        alpha=.1)  
+
+for(chr in paste0("chr",c(7,8,11,12,17)))
+  res = run_model_on_chr(chr, subset=NA, min_freq = 1, no_cores = 5, middle_point=TRUE, floor_by=1e6,
+                         alpha=.2)
+
+
+
+for(chr in paste0("chr",c(7,8,11,12,17)))
+  res = run_model_on_chr(chr, subset=NA, min_freq = 1, no_cores = 5, middle_point=TRUE, floor_by=1e6,
+                         alpha=.05)
+
+
+
+
+for(chr in paste0("chr",c(7,8,11,12)))
+  res = run_model_on_chr(chr, subset=NA, Age.Only = FALSE, min_freq = 1, no_cores = 5, middle_point=TRUE, floor_by=1e6,
+                         alpha=.1)  
+
+for(chr in paste0("chr",c(7,8,11,12,17)))
+  res = run_model_on_chr(chr, subset=NA, Age.Only = FALSE, min_freq = 1, no_cores = 5, middle_point=TRUE, floor_by=1e6,
+                         alpha=.2)
+
+
+
+for(chr in paste0("chr",c(7,8,11,12,17)))
+  res = run_model_on_chr(chr, subset=NA, min_freq = 1, Age.Only = FALSE, no_cores = 5, middle_point=TRUE, floor_by=1e6,
+                         alpha=.05)
+
 
 #---------------------------------------------------------------------------------------------------
  
@@ -287,3 +320,5 @@ res = run_model_on_chr(chr, subset=NA, min_freq = 1, no_cores = 9, middle_point=
 # 7 0.11135368 0.8789763 0.1113537 0.8789763 824.619  LMCC 426050    0.532        4     22 733783
 # 8 0.11358781 0.8740713 0.1135878 0.8740713 604.060  GASP 426050    0.532        4     22 733783
 # 9 0.12098234 0.8571418 0.1209823 0.8571418   5.613 Naive 426050    0.532        4     22 733783
+
+ 
