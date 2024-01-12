@@ -30,7 +30,7 @@ get_results_data <- function(min_freq = 1)
    
 }
 
-get_graph <- function(all_res, alpha_val, dmr=TRUE, scales = "fixed"){
+get_graph <- function(all_res, alpha_val, dmr=TRUE, scales = "fixed", Age.only=TRUE){
    if(dmr == TRUE) all_res$RMSE = all_res$RMSE_dmr
    title = paste0("Alpha = ",alpha_val, "; RMSE by chromosome and model")
 
@@ -42,7 +42,7 @@ get_graph <- function(all_res, alpha_val, dmr=TRUE, scales = "fixed"){
              scenario = ifelse(scenario == 1, "1 (all)", scenario),
              RMSE = ifelse(RMSE > 4000, 0.12, RMSE)) %>%
       mutate(chromosome = as.factor(as.numeric(chromosome))) %>% 
-      filter(alpha == alpha_val, Age.Only == TRUE) %>% 
+      filter(alpha == alpha_val, Age.Only == Age.only) %>% 
       ggplot(aes(x=chromosome, y=RMSE, color=model, group=model)) +
       geom_point(size=3, shape=19) +  
       geom_line() +  
@@ -72,5 +72,5 @@ get_graph <- function(all_res, alpha_val, dmr=TRUE, scales = "fixed"){
 # results = get_results_data()
 # get_graph(results, alpha_val =  .05)
 # get_graph(results, alpha_val =  .1)
-# get_graph(results, alpha_val =  .2)
+# get_graph(results, alpha_val =  .1, Age.only = T)
 
