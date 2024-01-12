@@ -585,7 +585,18 @@ display: none;
 library(kableExtra)
 library(magrittr)
 library(tidyverse)
-knitr::opts_knit$set(root.dir=&quot;/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude/&quot;)
+library(Jmisc)
+library(DiceEval)
+library(parallel)
+library(plotly)
+library(mgcv)
+library(Rcpp)
+library(RColorBrewer)
+library(ggpubr)
+library(ZIprop)
+library(corrplot)
+#source(&quot;methyl_func.R&quot;)
+#sourceAll(path=&quot;../functions/&quot;)
 #setwd(&quot;/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude/&quot;)</code></pre>
 <p>We analyze the gene methylation data derived from the Whole Genome
 Bisulfite Sequencing (WGBS) of the BLUEPRINT methylomes, as released in
@@ -1191,6 +1202,121 @@ regions with siginficant effect. I’ve included only the first 7
 chromosomes (also the 7 largest chromosomes) and I’m in the process of
 processing 6 more chromosomes in the hope that one of them might have
 regions correlated with age.</p>
+<p>The following two functions compute the p-values and dmr regions.</p>
+<pre class="r"><code>compute_p_values_and_plot &lt;- function(chromosome, load_p_values=TRUE, Male.Only=TRUE, plot = TRUE,
+                              alpha=0.05, min_freq=1, middle_point=FALSE, floor_by=1e7){
+
+   #&#39; This function either computes the p_values as discussed in the document or plot them or both.
+   #&#39; 
+   Y = readRDS(paste0(&quot;new_data/Ydat_common_&quot;,chromosome,&quot;.rds&quot;))
+   X = readRDS(paste0(&quot;new_data/Xdat_common_&quot;,chromosome,&quot;.rds&quot;)) %&gt;% as.data.frame() #%&gt;% 
+   sites = readRDS(paste0(&quot;new_data/sites_common_&quot;,chromosome,&quot;.rds&quot;))
+   
+   male_indices = which(X$MALE == 1)
+   Y = Y[male_indices,]
+   X = X[male_indices,]
+   
+   site_order = order(sites) 
+   Y = Y[,site_order]
+   sites = sites[site_order]
+   
+   dim(Y)
+   N = ncol(Y)
+   K = nrow(Y)
+   #--------------------------------
+   if(load_p_values == TRUE){
+      p_values = readRDS(paste0(&quot;new_data/p_values_&quot;,chromosome, &quot;.rds&quot;))
+   }else{
+      library(parallel)
+      no_cores &lt;- 12             
+      cl &lt;- makeCluster(no_cores)
+      
+      Age = X$AGE
+      clusterExport(cl, varlist = c(&quot;Y&quot;))
+      
+      p_values &lt;- parSapply(cl, 1:ncol(Y), function(i) {
+         model &lt;- lm(Y[, i] ~ Age) 
+         summary(model)$coefficients[&quot;Age&quot;, &quot;Pr(&gt;|t|)&quot;]
+      }) 
+      stopCluster(cl)
+      saveRDS(p_values, paste0(&quot;new_data/p_values_&quot;,chromosome,&quot;.rds&quot;))
+   }
+   
+   if(plot == TRUE){
+      
+      dmr_regions = get_dmr_regions(p_values, sites, alpha= alpha, min_freq = min_freq, return_seq = T,
+                                    middle_point = middle_point,floor_by = floor_by)
+      
+      
+      print(length(dmr_regions))
+      data.frame(x = 1:N, Site= sites, NegLogP = - log10(p_values)) %&gt;% 
+         mutate(color = ifelse(Site %in% dmr_regions,&quot;DMR&quot;,&quot;Not DMR&quot;)) -&gt;
+         manh.dat
+      #---------------------------------------------------------------------
+      #--------------------------------------------------------------------
+      
+      manh.dat %&gt;% 
+         ggplot(aes(Site, NegLogP, color=color, fill=color)) +  
+         geom_point(alpha = 0.6) +
+         scale_color_manual(values = c(&quot;DMR&quot; = &quot;blue&quot;, &quot;Not DMR&quot; = &quot;black&quot;)) +
+         theme_minimal() +
+         #scale_x_continuous(limits=c(0,2e8))+
+         xlab(&quot;Methylation Site&quot;) +
+         ylab(&quot;-log10(Adjusted P-value)&quot;) +
+         geom_hline(yintercept = -log10(0.05/N), linetype = &quot;dashed&quot;, color = &quot;red&quot;)+ 
+         geom_hline(yintercept = -log10(0.1/N), linetype = &quot;dashed&quot;, color = &quot;red&quot;)+ 
+         geom_hline(yintercept = -log10(0.2/N), linetype = &quot;dashed&quot;, color = &quot;red&quot;)+ 
+         ggtitle(paste0(&quot;Chromosomes &quot;,chromosome,&quot;; Male&quot;,&quot;; Alpha=0.5,0.1,0.2&quot;)) -&gt; p 
+      
+      ggsave(filename = paste0(&quot;./graphs/manhattan_plot_&quot;,chromosome,&quot;_Male&quot;, &quot;.png&quot;),
+             plot = p, width = 10, height = 6, dpi = 300) 
+   }
+}
+#------------------------
+# Example use:
+for(chr in paste0(&quot;chr&quot;,c(7,8,12,11,17)))
+   run_p_values_plot(chr, load_p_values = TRUE, alpha=0.1, min_freq=1, middle_point=TRUE, floor_by=1e6, plot=TRUE) 
+#--------------------------------------</code></pre>
+<pre class="r"><code>get_dmr_regions &lt;- function(p_values, sites, alpha=0.1, floor_by=1e7, min_freq=2, return_seq=FALSE,
+                            middle_point=FALSE){
+   
+   #&#39; if middle_point = FALSE then the sites are divided into equal regions of size floor_by and a region is considered
+   #&#39; dmr if it has at least min_freq of points below alpha/N.
+   #&#39; set return_seq = TRUE to return a list of all possible sites in the dmr regions
+   #&#39; if middle_point = TRUE  then it considers each point of p_value smaller than alpha/N and 
+   #&#39; takes floor_by/2 of points before and after it
+   #&#39; if return_seq = FALSE: then a list of sites where the p_value is smaller than alpha/N is returned for middle_point=TRUE
+   #&#39; and  a list of starting positions of chosen regions for middle_point = FALSE
+   
+   N = length(sites)
+   
+   if(middle_point == TRUE){
+      loci = sort(sites[which(p_values &lt; (alpha/N))])
+      if(return_seq == TRUE){
+         sequen = c()
+         step_size = round(floor_by/2)
+         end_site = 1
+         for(i in 1:length(loci)){
+            start_site = max( end_site, loci[i]-step_size)
+            end_site = loci[i] + step_size
+            sequen = c(sequen, start_site: end_site)
+         }
+         return(sequen)
+      }
+      return(loci)
+   }
+   
+   as.data.frame(table(floor(sites[which(p_values &lt; (alpha/N))] / floor_by) * floor_by)) %&gt;%
+      arrange(desc(Freq)) %&gt;%
+      filter(Freq &gt;= min_freq) -&gt; results
+   if(return_seq == TRUE){
+      values = as.numeric(as.character(results$Var1)) 
+      sequen = c()
+      for(x in values) sequen = c(sequen, x:(x+1e7))
+      return(sequen)
+   }
+   return(results)
+}</code></pre>
 
 
 

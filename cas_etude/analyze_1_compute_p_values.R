@@ -63,12 +63,15 @@ compute_p_values_and_plot <- function(chromosome, load_p_values=TRUE, Male.Only=
          geom_hline(yintercept = -log10(0.2/N), linetype = "dashed", color = "red")+ 
          ggtitle(paste0("Chromosomes ",chromosome,"; Male","; Alpha=0.5,0.1,0.2")) -> p 
       
-      ggsave(filename = paste0("./graphs/manhattan_plot_",chromosome,"_Male", ".png"),
+      ggsave(filename = paste0("./graphs/manhattan_plot_",chromosome,"_alpha_",alpha,"_Male", ".png"),
              plot = p, width = 10, height = 6, dpi = 300) 
    }
 }
 #------------------------
 # Example use:
-for(chr in paste0("chr",c(7,8,12,11,17)))
-   run_p_values_plot(chr, load_p_values = TRUE, alpha=0.1, min_freq=1, middle_point=TRUE, floor_by=1e6, plot=TRUE) 
+for(chr in paste0("chr",c(7,8,11,12,17))){
+   for(alpha in c(0.05, .1, .2))
+      compute_p_values_and_plot(chr, load_p_values = TRUE, alpha=alpha, min_freq=1, middle_point=TRUE, floor_by=1e6, plot=TRUE)
+   
+}
 #--------------------------------------

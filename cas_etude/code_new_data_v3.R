@@ -1,22 +1,4 @@
-setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude/")
 
-library(Jmisc)
-library(DiceEval)
-library(parallel)
-library(plotly)
-library(mgcv)
-library(Rcpp)
-library(RColorBrewer)
-library(ggpubr)
-library(ZIprop)
-library(corrplot)
-library(tidyverse)
-library(magrittr)
-
-library(doParallel)
-library(foreach)
-
-sourceAll(path="../functions/")
 
 
 get_dmr_regions <- function(p_values, sites, N, alpha=0.1, floor_by=1e7, min_freq=2, return_seq=FALSE,

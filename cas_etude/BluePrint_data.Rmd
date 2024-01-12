@@ -11,7 +11,18 @@ knitr::opts_chunk$set(echo = T, include=TRUE, cache = TRUE, results = "hold", ev
 library(kableExtra)
 library(magrittr)
 library(tidyverse)
-knitr::opts_knit$set(root.dir="/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude/")
+library(Jmisc)
+library(DiceEval)
+library(parallel)
+library(plotly)
+library(mgcv)
+library(Rcpp)
+library(RColorBrewer)
+library(ggpubr)
+library(ZIprop)
+library(corrplot)
+#source("methyl_func.R")
+#sourceAll(path="../functions/")
 #setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude/")
 ```
 
@@ -68,4 +79,14 @@ readRDS("new_data/Xdat_common_chr7.rds") %>%
 each individual in the dataset possesses approximately 25 million genes, with each gene annotated by its genomic location (site), the chromosome it belongs to, and its methylation level (scaled to 1). Focusing our study on a single chromosome, we acknowledge the uniqueness of each individual's genome – the variations in gene locations and the number of genes within each chromosome. Consequently, our analysis  considers only those genes located at common sites across all individuals.
 
 In order to identify regions highly correlated with age, we fit a linear model at each site (each chromosome independently) and record the p-value. Finally, we plot the p-valus against an adjusted critical value (0.1/Nc) where Nc are the number of shared sites in chromosome c. The resulting plots of -log(p-value) vs site location show that there are no regions with siginficant effect. I've included only the first 7 chromosomes (also the 7 largest chromosomes) and I'm in the process of processing 6 more chromosomes in the hope that one of them might have regions correlated with age.
+
+The following two functions compute the p-values and dmr regions.
+
+```{r code=readLines("analyze_1_compute_p_values.R")}
+
+```
+
+```{r code=readLines("new_data/analyze_2_compute_dmr.R")}
+
+```
 
