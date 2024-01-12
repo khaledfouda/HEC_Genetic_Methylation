@@ -1,5 +1,3 @@
-
-#---------------------------------------------------------------------------
 combine_feathers_to_rds_2 <- function( chromosome = NULL,
                                     dat.info= readRDS("new_data/sample_info.rds"),
                                     cut_off = 1e6,
@@ -88,4 +86,4 @@ combine_feathers_to_rds_2 <- function( chromosome = NULL,
 }
 #------------------------------------------------------------------------------------------------------
 # example:
-combine_feathers_to_rds_2(chromosome = "chr12") 
+#combine_feathers_to_rds_2(chromosome = "chr12") 

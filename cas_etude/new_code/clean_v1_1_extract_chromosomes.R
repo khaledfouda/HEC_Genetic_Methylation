@@ -1,22 +1,3 @@
-
-#setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina")
-setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude/")
-
-# install rtracklayer to read bed files
-#if (!requireNamespace("BiocManager", quietly = TRUE))
-#   install.packages("BiocManager")
-#BiocManager::install("rtracklayer")
-#-----------
-
-library(rtracklayer)
-library(tidyverse)
-library(readr)
-library(magrittr)
-library(skimr)
-library(feather)
-select <- dplyr::select
-
-#-------------------------------------------
 transform_age <- function(age) {
    if (is.na(age) || age == "" || !grepl("^\\s*\\d+\\s*-\\s*\\d+\\s*$", age)) {
       return(NA)
@@ -87,5 +68,5 @@ transform_raw_to_feather <- function(chromosome_to_retain = NULL,
 }
 #-----------------------------------------------------------------------------
 # using the function, or specify the chromosomes if needed
-transform_raw_to_feather(save_all_chromosomes = TRUE)
+#transform_raw_to_feather(save_all_chromosomes = TRUE)
 #---------------------------------------------------------------------------

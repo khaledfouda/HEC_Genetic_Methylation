@@ -74,4 +74,4 @@ combine_feathers_to_rds <- function( chromosome = NULL,
 }
 #---------------------------------------------------------------
 # Example:
-combine_feathers_to_rds(chromosome = "chr12")
+#combine_feathers_to_rds(chromosome = "chr12")

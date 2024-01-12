@@ -69,9 +69,9 @@ compute_p_values_and_plot <- function(chromosome, load_p_values=TRUE, Male.Only=
 }
 #------------------------
 # Example use:
-for(chr in paste0("chr",c(7,8,11,12,17))){
-   for(alpha in c(0.05, .1, .2))
-      compute_p_values_and_plot(chr, load_p_values = TRUE, alpha=alpha, min_freq=1, middle_point=TRUE, floor_by=1e6, plot=TRUE)
-   
-}
+# for(chr in paste0("chr",c(7,8,11,12,17))){
+#    for(alpha in c(0.05, .1, .2))
+#       compute_p_values_and_plot(chr, load_p_values = TRUE, alpha=alpha, min_freq=1, middle_point=TRUE, floor_by=1e6, plot=TRUE)
+#    
+# }
 #--------------------------------------
