@@ -17,5 +17,5 @@ library(doParallel)
 library(foreach)
 
 sourceAll(path="../functions/")
-source("new_code/analyze_1_compute_p_values.R/")
-source("new_code")
+source("./analyze_1_compute_p_values.R/")
+source(".")
