@@ -95,7 +95,7 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
     ungroup())$index  
   
   if( (K-length(k_star)) < min_k ){
-    extra_k = sample(1:length(k_star.new), (min_k-K+length(k_star)),replace = FALSE )
+    extra_k = sample(1:length(k_star), (min_k-K+length(k_star)),replace = FALSE )
     k_star <- k_star[-extra_k]
   }
   if(Age.Only == TRUE){
@@ -209,7 +209,7 @@ run_model_on_chr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05
            miss_c = round(k_star/K,2))
   row.names(res) <- NULL
   print(res)
-  save(res, file = paste0("results/res_dmr_",chromosome,"_MaleOnly_",Male.Only,"_AgeOnly_",
+  save(res, file = paste0("results/res_dmr1_",chromosome,"_MaleOnly_",Male.Only,"_AgeOnly_",
                                                  Age.Only,"_",alpha,"x",min_freq,".Rdata"))
   return(res) 
 }
@@ -230,8 +230,6 @@ for(chr in paste0("chr",c(7,8,11,12,17)))
                          alpha=.05)
 
 
-
-
 for(chr in paste0("chr",c(7,8,11,12)))
   res = run_model_on_chr(chr, subset=NA, Age.Only = FALSE, min_freq = 1, no_cores = 5, middle_point=TRUE, floor_by=1e6,
                          alpha=.1)  
@@ -247,8 +245,25 @@ for(chr in paste0("chr",c(7,8,11,12,17)))
                          alpha=.05)
 
 
+
+res = run_model_on_chr("chr17", subset=NA, min_freq = 1, Age.Only = TRUE,
+                       no_cores = 5, middle_point=TRUE, floor_by=1e6,
+                       alpha=.2, min_k = 4)
+
+
 #---------------------------------------------------------------------------------------------------
- 
+# alpha = .05
+# min_frq = 1
+# load(paste0("results/res_dmr_",chromosome,"_MaleOnly_TRUE_AgeOnly_TRUE_",
+#                              alpha,"x",min_freq,".Rdata"))
+# 
+# 
+# 
+# res %>%
+#   mutate(RMSE = round(RMSE, 3), R2 = round(R2, 3), RMSE_dmr = round(RMSE_dmr,3),
+#          R2_dmr = round(R2_dmr, 3), time_min = round(time/60,1), time=NULL,
+#          N = paste0(round(N/1e6,1),"M"),n_star = paste0(round(n_star/1e6,1),"M"))
+
 #---
 
 

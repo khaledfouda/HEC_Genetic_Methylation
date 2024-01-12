@@ -2,6 +2,7 @@ setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude/")
 
 #BiocManager::install("dmrseq")
 
+library(BiocParallel)
 library(tidyverse)
 library(dmrseq)
 chromosome = "chr7"
@@ -57,60 +58,56 @@ bs <- BSseq(chr = chr, pos = sites,
            M = Methylation, Cov = Coverage,
            sampleNames = X$SAMPLE_ID)    
 
-#rowSums(getCoverage(bs))[2]
-
 pData(bs)$AGE <- X$AGE 
 bs = sort(bs)
-library(BiocParallel)
-#options(MulticoreParam=MulticoreParam(workers=4))
 param <- SnowParam(workers = 1, type = "SOCK")
 regions <- dmrseq(bs=bs, testCovariate="AGE", cutoff = .5,chrsPerChunk =1, BPPARAM = param)     
  
  # load example data
-data(BS.chr21)
-# the covariate of interest is the 'CellType' column of pData(BS.chr21)
-testCovariate <- 'CellType' 
-# run dmrseq on a subset of the chromosome (10K CpGs)
-regions <- dmrseq(bs=BS.chr21[240001:250000,],
-                  cutoff = 0.05,
-                  testCovariate=testCovariate)
-
-
-BiocManager::install(version = "3.18")
-BiocManager::install("bsseq")
-BiocManager::valid()
-BiocManager::version()
-
-BiocManager::install("SummarizedExperiment")
-library(SummarizedExperiment)
-
-BiocManager::install(c(
-   "bbmle", "bigalgebra", "brew", "brio", "cli", "cowplot", "curl", "dagitty", "data.table",
-   "datawizard", "DBI", "desc", "DT", "e1071", "emmeans", "fansi", "future", "future.apply",
-   "gdtools", "ggridges", "htmlwidgets", "httpuv", "igraph", "later", "lavaan", "maps", "markdown",
-   "matrixStats", "mixAK", "patchwork", "pkgbuild", "processx", "progress", "psych", "QuickJSR",
-   "ragg", "randomForestSRC", "Rcpp", "RCurl", "recipes", "s2", "sandwich", "sass", "segmented",
-   "stringi", "svglite", "tensorA", "tidygraph", "timeDate", "tseries", "vroom", "yaml"
-), update = TRUE, ask = FALSE, force = TRUE)
-
-infile <- system.file("extdata/test_data.fastq_bismark.bismark.cov.gz",
-                      package = 'bsseq')
-bismarkBSseq <- read.bismark(files = infile,
-                             rmZeroCov = TRUE,
-                             strandCollapse = FALSE,
-                             verbose = TRUE)
-bismarkBSseq@assays@data@listData[[3]][1:4,]
-
-data(BS.chr21)
-
-# reorder samples to create a null comparison 
-BS.null <- BS.chr21[1:20000,c(1,3,2,4)]
-
-# add 100 DMRs
-BS.chr21.sim <- simDMRs(bs=BS.null, num.dmrs=100)
-
-# bsseq object with original null + simulated DMRs
-show(BS.chr21.sim$bs)
-
-
-BS.chr21.sim$dmr.L[1:5]
+# data(BS.chr21)
+# # the covariate of interest is the 'CellType' column of pData(BS.chr21)
+# testCovariate <- 'CellType' 
+# # run dmrseq on a subset of the chromosome (10K CpGs)
+# regions <- dmrseq(bs=BS.chr21[240001:250000,],
+#                   cutoff = 0.05,
+#                   testCovariate=testCovariate)
+# 
+# 
+# BiocManager::install(version = "3.18")
+# BiocManager::install("bsseq")
+# BiocManager::valid()
+# BiocManager::version()
+# 
+# BiocManager::install("SummarizedExperiment")
+# library(SummarizedExperiment)
+# 
+# BiocManager::install(c(
+#    "bbmle", "bigalgebra", "brew", "brio", "cli", "cowplot", "curl", "dagitty", "data.table",
+#    "datawizard", "DBI", "desc", "DT", "e1071", "emmeans", "fansi", "future", "future.apply",
+#    "gdtools", "ggridges", "htmlwidgets", "httpuv", "igraph", "later", "lavaan", "maps", "markdown",
+#    "matrixStats", "mixAK", "patchwork", "pkgbuild", "processx", "progress", "psych", "QuickJSR",
+#    "ragg", "randomForestSRC", "Rcpp", "RCurl", "recipes", "s2", "sandwich", "sass", "segmented",
+#    "stringi", "svglite", "tensorA", "tidygraph", "timeDate", "tseries", "vroom", "yaml"
+# ), update = TRUE, ask = FALSE, force = TRUE)
+# 
+# infile <- system.file("extdata/test_data.fastq_bismark.bismark.cov.gz",
+#                       package = 'bsseq')
+# bismarkBSseq <- read.bismark(files = infile,
+#                              rmZeroCov = TRUE,
+#                              strandCollapse = FALSE,
+#                              verbose = TRUE)
+# bismarkBSseq@assays@data@listData[[3]][1:4,]
+# 
+# data(BS.chr21)
+# 
+# # reorder samples to create a null comparison 
+# BS.null <- BS.chr21[1:20000,c(1,3,2,4)]
+# 
+# # add 100 DMRs
+# BS.chr21.sim <- simDMRs(bs=BS.null, num.dmrs=100)
+# 
+# # bsseq object with original null + simulated DMRs
+# show(BS.chr21.sim$bs)
+# 
+# 
+# BS.chr21.sim$dmr.L[1:5]

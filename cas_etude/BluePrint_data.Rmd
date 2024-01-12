@@ -1,0 +1,71 @@
+---
+title: "Gene Methylation - BluePrint Data"
+author: "Khaled Fouda"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+
+```{r setup, include=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = T, include=TRUE, cache = TRUE, results = "hold", eval = F)
+library(kableExtra)
+library(magrittr)
+library(tidyverse)
+knitr::opts_knit$set(root.dir="/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude/")
+#setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude/")
+```
+
+
+
+
+We analyze the gene methylation data derived from the Whole Genome Bisulfite Sequencing (WGBS) of the BLUEPRINT methylomes, as released in 2015. The BLUEPRINT project, a large-scale research initiative, is part of the International Human Epigenome Consortium (IHEC) and is substantially funded by the European Union. This project aims to deepen the understanding of how the epigenome influences human health and disease. [blueprint-epigenome.eu](https://blueprint-epigenome.eu/) 
+
+The data obtained from the BLUEPRINT data portal, contains high-quality methylation information. From the initial dataset of 81 samples, we focus our analysis on 57 samples for which Age information was non-missing. Among these selected samples, 10 individuals are diagnosed with Leukemia and 47 are healthy individuals.
+
+There are 24 males and 33 females.  The majority of the samples (46) are derived from venous blood, while a smaller subset (11) originates from bone marrow.
+
+The following function cleans the data file and retain the needed chromosomes from the bed files. Each chromosome/subject pair is saved to a separate feather file. Only the mythylation value is saved along with the location.
+
+```{r code=readLines("new_data/clean_v1_1_extract_chromosomes.R")}
+
+```
+
+Another file "new_data/clean_v2_extract_chromosomes.R" contains the same function but retains the mythylation value as 5/600 for example instead of a single value. This is necessary for applying the dmrseq package.
+
+```{r eval=TRUE}
+
+dat.info <- readRDS("new_data/sample_info.rds")
+sample_n(dat.info, 5) %>% kable(format = "html", table.attr = "style='width:100%;'")%>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+
+```
+The second cleaning step is to merge the feather files for each chromosome into a single matrix. 
+
+```{r code=readLines("new_data/clean_v1_2_combine_feathers.R")}
+
+```
+Again, another file "new_data/clean_v2_2_combine_feathers.R" contains the same functions but retains methylation as a digit and the coverage matrix. The methylation value is the two matrices divided by each other.
+
+
+
+-----
+
+Our final covariate data contains four binary variables representing health status (Leukemia vs. healthy), gender (male vs. female), and sample source (venous blood vs. bone marrow), along with a continuous variable for Age.
+
+```{r eval=TRUE}
+
+readRDS("new_data/Xdat_common_chr7.rds") %>%
+   as.data.frame %>% 
+   sample_n(5) %>%
+   kable(format = "html", table.attr = "style='width:100%;'") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+
+```
+
+
+each individual in the dataset possesses approximately 25 million genes, with each gene annotated by its genomic location (site), the chromosome it belongs to, and its methylation level (scaled to 1). Focusing our study on a single chromosome, we acknowledge the uniqueness of each individual's genome – the variations in gene locations and the number of genes within each chromosome. Consequently, our analysis  considers only those genes located at common sites across all individuals.
+
+In order to identify regions highly correlated with age, we fit a linear model at each site (each chromosome independently) and record the p-value. Finally, we plot the p-valus against an adjusted critical value (0.1/Nc) where Nc are the number of shared sites in chromosome c. The resulting plots of -log(p-value) vs site location show that there are no regions with siginficant effect. I've included only the first 7 chromosomes (also the 7 largest chromosomes) and I'm in the process of processing 6 more chromosomes in the hope that one of them might have regions correlated with age.
+
