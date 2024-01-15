@@ -1,15 +1,15 @@
 run_model_on_chromosome <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05,
                              min_freq=1, min_k=2,subset=NA, no_cores=9,
-                             floor_by=1e7, middle_point=FALSE){
+                             floor_by=1e7, middle_point=FALSE, note = ""){
     
   setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude/")  
-  Y = readRDS(paste0("new_data/Ydat_common_",chromosome,".rds"))
-  sites = readRDS(paste0("new_data/sites_common_",chromosome,".rds"))
-  X = readRDS(paste0("new_data/Xdat_common_",chromosome,".rds")) %>%
+  Y = readRDS(paste0("new_data/Ydat_common_",chromosome, note, ".rds"))
+  sites = readRDS(paste0("new_data/sites_common_",chromosome, note, ".rds"))
+  X = readRDS(paste0("new_data/Xdat_common_",chromosome, note, ".rds")) %>%
     as.data.frame() %>% 
     mutate(AGE = (AGE - mean(AGE))/ sd(AGE) ) %>% 
     as.matrix()
-  p_values = readRDS(paste0("new_data/p_values_",chromosome, ".rds"))
+  p_values = readRDS(paste0("new_data/p_values_",chromosome, note, ".rds"))
 
   if(!is.na(subset)){
     Y = Y[,1:subset]
@@ -155,7 +155,7 @@ run_model_on_chromosome <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,al
   row.names(res) <- NULL
   print(res)
   save(res, file = paste0("results/res_dmr1_",chromosome,"_MaleOnly_",Male.Only,"_AgeOnly_",
-                                                 Age.Only,"_",alpha,"x",min_freq,".Rdata"))
+                                                 Age.Only,"_",alpha,"x",min_freq, note, ".Rdata"))
   return(res) 
 }
 #-----------------------------------------------------------------------------------------------

@@ -1,7 +1,10 @@
 combine_feathers_to_rds <- function( chromosome = NULL,
                                     dat.info= readRDS("new_data/sample_info.rds"),
                                     cut_off = 1e6,
-                                    save_all_chromosomes = FALSE
+                                    condition_pre = NA,
+                                    condition_post = NA,
+                                    save_all_chromosomes = FALSE,
+                                    note = ""
                                     ){
    # Warning: If save_all_chromosomes is chosen then all chromosomes will be saved to the same matrix!!
    # run the function on each chromosome individually.
@@ -9,6 +12,9 @@ combine_feathers_to_rds <- function( chromosome = NULL,
    # it only considers common sites and individuals with number of genes per chromosome larger than the cut_off
    
    if(save_all_chromosomes == TRUE) chromosome = "ALL"
+   
+   if(!is.na(condition_pre))
+      dat.info <- dat.info %>% filter(eval(parse(text=condition_pre)))
    
    X.dat <- 
       dat.info %>% 
@@ -18,7 +24,10 @@ combine_feathers_to_rds <- function( chromosome = NULL,
                 AML = (DISEASE %in% c("Acute myeloid leukemia", "Acute Myeloid Leukemia")) + 0,
                 APL = (DISEASE == "Acute promyelocytic leukemia" ) + 0,
                 BONE_MARROW = (TISSUE_TYPE == "Bone marrow") + 0,
-                CH1_FILE = paste0(featherFile,"_",chromosome,"_.feather") ) 
+                CH1_FILE = paste0(featherFile,"_",chromosome,"_.feather") )
+   
+   if(!is.na(condition_post))
+      X.dat <- X.dat %>% filter(eval(parse(text=condition_post)))
    #-------------------------------------------------------------------------------
    # I need a list of common positions in Chromosome 1 for all patients.
    position_list = list()
@@ -65,9 +74,9 @@ combine_feathers_to_rds <- function( chromosome = NULL,
          Y.dat_common[i,]
    }
    Y.dat_common = Y.dat_common / 1000
-   saveRDS(sort(common_positions), paste0("new_data/sites_common_",chromosome,".rds"))
-   saveRDS(as.matrix(select(X.dat_common,-CH1_FILE)), paste0("new_data/Xdat_common_",chromosome,".rds"))
-   saveRDS(Y.dat_common, paste0("new_data/Ydat_common_",chromosome,".rds"))
+   saveRDS(sort(common_positions), paste0("new_data/sites_common_",chromosome,note,".rds"))
+   saveRDS(as.matrix(select(X.dat_common,-CH1_FILE)), paste0("new_data/Xdat_common_",chromosome,note,".rds"))
+   saveRDS(Y.dat_common, paste0("new_data/Ydat_common_",chromosome,note,".rds"))
    if(chromosome == "ALL")
       saveRDS(order(common_positions), paste0("new_data/chromosomes_common_",chromosome,".rds"))
    #---------------------------------------------------------------------------------

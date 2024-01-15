@@ -1,11 +1,11 @@
 compute_p_values_and_plot <- function(chromosome, load_p_values=TRUE, Male.Only=TRUE, plot = TRUE,
-                              alpha=0.05, min_freq=1, middle_point=FALSE, floor_by=1e7){
+                              alpha=0.05, min_freq=1, middle_point=FALSE, floor_by=1e7, note = ""){
 
    #' This function either computes the p_values as discussed in the document or plot them or both.
    #' 
-   Y = readRDS(paste0("new_data/Ydat_common_",chromosome,".rds"))
-   X = readRDS(paste0("new_data/Xdat_common_",chromosome,".rds")) %>% as.data.frame() #%>% 
-   sites = readRDS(paste0("new_data/sites_common_",chromosome,".rds"))
+   Y = readRDS(paste0("new_data/Ydat_common_",chromosome, note, ".rds"))
+   X = readRDS(paste0("new_data/Xdat_common_",chromosome, note, ".rds")) %>% as.data.frame() #%>% 
+   sites = readRDS(paste0("new_data/sites_common_",chromosome, note, ".rds"))
    
    male_indices = which(X$MALE == 1)
    Y = Y[male_indices,]
@@ -20,7 +20,7 @@ compute_p_values_and_plot <- function(chromosome, load_p_values=TRUE, Male.Only=
    K = nrow(Y)
    #--------------------------------
    if(load_p_values == TRUE){
-      p_values = readRDS(paste0("new_data/p_values_",chromosome, ".rds"))
+      p_values = readRDS(paste0("new_data/p_values_",chromosome, note, ".rds"))
    }else{
       library(parallel)
       no_cores <- 12             
@@ -34,7 +34,7 @@ compute_p_values_and_plot <- function(chromosome, load_p_values=TRUE, Male.Only=
          summary(model)$coefficients["Age", "Pr(>|t|)"]
       }) 
       stopCluster(cl)
-      saveRDS(p_values, paste0("new_data/p_values_",chromosome,".rds"))
+      saveRDS(p_values, paste0("new_data/p_values_",chromosome, note, ".rds"))
    }
    
    if(plot == TRUE){
@@ -63,7 +63,7 @@ compute_p_values_and_plot <- function(chromosome, load_p_values=TRUE, Male.Only=
          geom_hline(yintercept = -log10(0.2/N), linetype = "dashed", color = "red")+ 
          ggtitle(paste0("Chromosomes ",chromosome,"; Male","; Alpha=0.5,0.1,0.2")) -> p 
       
-      ggsave(filename = paste0("./graphs/manhattan_plot_",chromosome,"_alpha_",alpha,"_Male", ".png"),
+      ggsave(filename = paste0("./graphs/manhattan_plot_",chromosome,"_alpha_",alpha,"_Male", note, ".png"),
              plot = p, width = 10, height = 6, dpi = 300) 
    }
 }

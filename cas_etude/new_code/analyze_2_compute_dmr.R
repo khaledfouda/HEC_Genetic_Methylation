@@ -13,6 +13,7 @@ get_dmr_regions <- function(p_values, sites, alpha=0.1, floor_by=1e7, min_freq=2
    
    if(middle_point == TRUE){
       loci = sort(sites[which(p_values < (alpha/N))])
+      if(is_empty(loci)) return(loci)
       if(return_seq == TRUE){
          sequen = c()
          step_size = round(floor_by/2)
