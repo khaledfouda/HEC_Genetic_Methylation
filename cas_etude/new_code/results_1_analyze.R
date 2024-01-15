@@ -4,6 +4,7 @@ get_results_data <- function(min_freq = 1)
    all_res <-data.frame()
    for(Age.Only in c(T,F)){
       for(alpha in c(.05,.1,.2)){
+         print(paste("*_*_*_*_*_*_*_*_*_*_*_ Alpha = ",alpha,"*_*_*_*_*_*_*_*_*_*_*_"))
          for(chromosome in paste0("chr",c(7,8,11,12,17))){
             
             if(chromosome == "chr17" & Age.Only == FALSE & alpha == 0.1) next
@@ -11,7 +12,7 @@ get_results_data <- function(min_freq = 1)
             load(paste0("results/res_dmr_",chromosome,"_MaleOnly_TRUE_AgeOnly_",Age.Only ,"_",
                         alpha,"x",min_freq,".Rdata"))
             print(paste0("Chromosome ", strsplit(chromosome,"chr")[[1]][2], "; MALE ONLY;",
-                         ifelse(Age.Only, " AGE ONLY", " ALL COVARIATES"), "; alpha = ",alpha,"; min_freq = ",min_freq,">>>>>>>>"))
+                         ifelse(Age.Only, " AGE ONLY", " ALL COVARIATES"), "; alpha = ",alpha,"; min_freq = ",min_freq," >>>>>>>>"))
             res %>%
                mutate(RMSE = round(RMSE, 3), R2 = round(R2, 3), RMSE_dmr = round(RMSE_dmr,3),
                       R2_dmr = round(R2_dmr, 3), time_min = round(time/60,1), time=NULL,
@@ -24,14 +25,18 @@ get_results_data <- function(min_freq = 1)
                rbind(all_res) -> all_res
                
          }
+         
       }
+      print("################################################################################################")
    }
    return(all_res)
    
 }
 
-get_graph <- function(all_res, alpha_val, dmr=TRUE, scales = "fixed", Age.only=TRUE){
-   if(dmr == TRUE) all_res$RMSE = all_res$RMSE_dmr
+get_graph <- function(all_res, alpha_val, dmr=FALSE, scales = "fixed", Age.only=TRUE){
+   if(dmr == TRUE) {
+      all_res$RMSE[scenario] = all_res$RMSE_dmr
+   }
    title = paste0("Alpha = ",alpha_val, "; RMSE by chromosome and model")
 
    all_res %>% filter(scenario == 3) %>%
@@ -65,12 +70,11 @@ get_graph <- function(all_res, alpha_val, dmr=TRUE, scales = "fixed", Age.only=T
    return(p)
 }
 
-
 # run:
-# setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude/")  
-# suppressMessages(source("new_code/load_files.R"))
-# results = get_results_data()
-# get_graph(results, alpha_val =  .05)
-# get_graph(results, alpha_val =  .1)
-# get_graph(results, alpha_val =  .1, Age.only = T)
+setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude/")
+suppressMessages(source("new_code/load_files.R"))
+results = get_results_data()
+get_graph(results, alpha_val =  .05,dmr=FALSE)
+get_graph(results, alpha_val =  .1,dmr=FALSE)
+get_graph(results, alpha_val =  .2 ,dmr=FALSE)
 
