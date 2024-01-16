@@ -11,11 +11,7 @@ run_model_on_chromosome_dmr <- function(chromosome, Age.Only=TRUE, Male.Only=TRU
     as.matrix()
   p_values = readRDS(paste0("new_data/p_values_",chromosome, note, ".rds"))
 
-  if(!is.na(subset)){
-    Y = Y[,1:subset]
-    sites = sites[1:subset]
-    p_values = p_values[1:subset]
-  }
+  
   
   if(Male.Only == TRUE){
     male_indices = which(X[,"MALE"]==1)
@@ -30,7 +26,22 @@ run_model_on_chromosome_dmr <- function(chromosome, Age.Only=TRUE, Male.Only=TRU
   dmr_regions = get_dmr_regions(p_values, sites, corrected_alpha, floor_by = floor_by,
                                 min_freq = min_freq, middle_point = middle_point, return_seq = T)
   ind_dmr = sort(which(sites %in% dmr_regions))
+  
+  if(!is.na(subset)){
+    subset = unique(c(1:subset, ind_dmr))
+    ind_dmr = sort(which(subset %in% ind_dmr))
+    print(length(subset))
+    Y = Y[,subset]
+    sites = sites[subset]
+    p_values = p_values[subset]
+    N = ncol(Y)
+    print(dim(Y))
+    print(length(sites))
+    print(length(p_values))
+  }
+  
   sites = scale_01(sites)
+  
   
   
   k_star <-
@@ -58,28 +69,31 @@ run_model_on_chromosome_dmr <- function(chromosome, Age.Only=TRUE, Male.Only=TRU
   n_star_list = list(sort(ind_dmr)) #scenario 4
   
   
-  
-  cl <- makeCluster(no_cores)
-  registerDoParallel(cl)
-  nothing = clusterEvalQ(cl, {
-    require(Jmisc)
-    require(DiceEval)
-    require(mgcv)
-    require(Rcpp)
-    require(RColorBrewer)
-    require(ggpubr)
-    require(ZIprop)
-    require(corrplot)
-    require(tidyverse)
-    require(magrittr)
-    sourceAll(path="../functions/")
-  })
+  if(no_cores > 1){
+    cl <- makeCluster(no_cores)
+    registerDoParallel(cl)
+    nothing = clusterEvalQ(cl, {
+      require(Jmisc)
+      require(DiceEval)
+      require(mgcv)
+      require(Rcpp)
+      require(RColorBrewer)
+      require(ggpubr)
+      require(ZIprop)
+      require(corrplot)
+      require(tidyverse)
+      require(magrittr)
+      sourceAll(path="../functions/")
+    })
+  }  
   print(dim(Y))
   print(length(n_star_list[[1]]))
   print(dim(X))
   print(length(k_star))
   
+  #results <- data.frame()
   
+  #for(i in 1:3){
   results <- foreach(i = 1:3, .combine = "rbind") %dopar% {
     
     ind_na_sub = ind_dmr
@@ -87,7 +101,9 @@ run_model_on_chromosome_dmr <- function(chromosome, Age.Only=TRUE, Male.Only=TRU
     
   
     methyl <- Y  
+    print(dim(methyl))
     methyl[k_star, n_star] <- NA
+    print(dim(methyl))
     
     if(i == 1){
       
@@ -127,11 +143,13 @@ run_model_on_chromosome_dmr <- function(chromosome, Age.Only=TRUE, Male.Only=TRU
     
     out$scenario = "4"
     
+    #results = rbind(results, out)
+    print(out)
     out
   }
    
 
-  stopCluster(cl)
+  #stopCluster(cl)
 
   res = as.data.frame(results) %>%
     arrange(scenario) %>%  
@@ -151,3 +169,4 @@ run_model_on_chromosome_dmr <- function(chromosome, Age.Only=TRUE, Male.Only=TRU
 # res = run_model_on_chr("chr17", subset=NA, min_freq = 1, Age.Only = TRUE,
 #                        no_cores = 5, middle_point=TRUE, floor_by=1e6,
 #                        alpha=.2, min_k = 4)
+  

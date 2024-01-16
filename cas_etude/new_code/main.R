@@ -44,7 +44,7 @@ for(chr in chromosomes){
 for(chr in chromosomes){
    print(chr)
    for(alpha in alphas)
-   res = run_model_on_chromosome_dmr(chr, subset=NA, min_freq = 1, no_cores = 3, 
+   res = run_model_on_chromosome_dmr(chr, subset=10000, min_freq = 1, no_cores = 3, 
                                  middle_point=TRUE, floor_by=1e3,
                           alpha=alpha, Male.Only = FALSE, Age.Only = TRUE,
                           note = note, correction=correction)
