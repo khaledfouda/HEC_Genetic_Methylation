@@ -51,6 +51,8 @@ combine_feathers_to_rds <- function( chromosome = NULL,
          if(X.dat$length[i] > cut_off){
             position_list_2M[[idx]] = position_list[[i]]
             idx = idx + 1
+         }else{
+            print(paste("Skipped Donor",i,"for having ",x.dat$length[i], "sites"))
          }
       }
    }else{
@@ -84,3 +86,7 @@ combine_feathers_to_rds <- function( chromosome = NULL,
 #---------------------------------------------------------------
 # Example:
 #combine_feathers_to_rds(chromosome = "chr12")
+# for(i in 1:12)
+#    readRDS(paste0("new_data/Xdat_common_chr",i,".rds")) %>% as.data.frame %>% arrange(length) %>% head(4) %>% print()
+# dat1 
+# sort(lll$length)

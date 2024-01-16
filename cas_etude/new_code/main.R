@@ -8,13 +8,17 @@ chromosomes = paste0("chr", c(7,8,11,12,17))
 alphas = c(.05, 0.1, 0.2)
 #---------------------------------------------
 # clean
-transform_raw_to_feather(chromosome_to_retain = chromosomes)
+#transform_raw_to_feather(chromosome_to_retain = chromosomes)
 #--------------------
-condition = "DONOR_SEX == 'Male' & TISSUE_TYPE != 'Venous blood'"
-condition = "is.na(DONOR_SEX) & TISSUE_TYPE != 'Venous blood'"
-condition_post = "AGE != 2.5 & BONE_MARROW == 0"
-note = "_MALE_BLOOD_"
-chromosomes = c("chr17")
+condition_pre = "DONOR_SEX == 'Male' & TISSUE_TYPE != 'Venous blood'"
+condition_pre = "is.na(DONOR_SEX) & TISSUE_TYPE != 'Venous blood'"
+
+condition_post = "(AGE != 2.5) & (BONE_MARROW == 1) & (! SAMPLE_ID %in% c(7,17,56,36))"
+
+note = "_subset_BONE_"
+
+chromosomes = paste0("chr", c(2:12,17))
+
 for(chr in chromosomes)
    combine_feathers_to_rds(chromosome = chr,condition_post = condition_post,note = note)
 # OR for dmrseq
@@ -23,28 +27,32 @@ for(chr in chromosomes)
 #    combine_feathers_to_rds2(chromosome = chr)
 #---------------------
 # analyze
-alphas = c(0.2)
+alphas = c(1e-4)
+correction =  function(alpha,N) alpha
 
-
-# chromosome = chr; load_p_values = FALSE; alpha=alpha;
-# min_freq=1; middle_point=TRUE; floor_by=1e3; plot=TRUE; note = note
+chromosome = chr; load_p_values = T; alpha=alpha;
+min_freq=1; middle_point=TRUE; floor_by=1e3; plot=TRUE; note = note
 
 for(chr in chromosomes){
    print(chr)
    for(alpha in alphas)
-      compute_p_values_and_plot(chromosome = chr, load_p_values = T, alpha=alpha,
-                                min_freq=1, middle_point=TRUE, floor_by=1e3, plot=TRUE, note = note)
+      compute_p_values_and_plot(chromosome = chr, load_p_values = T, alpha=alpha, Male.Only = FALSE,
+                                min_freq=1, middle_point=TRUE, floor_by=1e3, plot=TRUE, note = note,
+                                correction = correction)
 }
 # fit model: - warning: slow!
 for(chr in chromosomes){
+   print(chr)
    for(alpha in alphas)
-   res = run_model_on_chromosome(chr, subset=NA, min_freq = 1, no_cores = 5, middle_point=TRUE, floor_by=1e6,
-                          alpha=alpha, Male.Only = TRUE, Age.Only = TRUE)
+   res = run_model_on_chromosome_dmr(chr, subset=NA, min_freq = 1, no_cores = 3, 
+                                 middle_point=TRUE, floor_by=1e3,
+                          alpha=alpha, Male.Only = FALSE, Age.Only = TRUE,
+                          note = note, correction=correction)
 }
 #------------------
 # visualize results
 results = get_results_data()
-for(alpha in alphas)
-   print(get_graph(results, alpha_val =  alpha))
+for(alpha in alphas) 
+   print(get_graph(results, alpha_val =  alpha))   
 #-----------
 # END

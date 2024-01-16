@@ -1,4 +1,4 @@
-run_model_on_chromosome <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05,
+run_model_on_chromosome_dmr <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,alpha=.05,
                              min_freq=1, min_k=2,subset=NA, no_cores=9,
                              floor_by=1e7, middle_point=FALSE, note = "", correction = function(alpha, N)(alpha/N)){
     
@@ -55,9 +55,7 @@ run_model_on_chromosome <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,al
   }
   
   #---------------
-  n_star_list = list(sort(unique(c(round(seq(1,N,length.out=round(N*0.9)))))), #scenario 1,
-                     sort(unique(c(round(seq(1,N,length.out=round(N*0.9))),ind_dmr))), #scenario 3
-                     sort(ind_dmr)) #scenario 4
+  n_star_list = list(sort(ind_dmr)) #scenario 4
   
   
   
@@ -78,28 +76,20 @@ run_model_on_chromosome <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,al
   })
   print(dim(Y))
   print(length(n_star_list[[1]]))
-  print(length(n_star_list[[2]]))
-  print(length(n_star_list[[3]]))
   print(dim(X))
   print(length(k_star))
   
   
-  results <- foreach(i = 1:9, .combine = "rbind") %dopar% {
-    if(i %in% 1:3){
-      ind_na_sub = NULL
-      n_star <- n_star_list[[1]]
-    }else if(i %in% 4:6){
-      ind_na_sub = ind_dmr
-      n_star <- n_star_list[[2]]
-    }else if(i %in% 7:9){
-      ind_na_sub = ind_dmr
-      n_star <- n_star_list[[3]]
-    }
+  results <- foreach(i = 1:3, .combine = "rbind") %dopar% {
+    
+    ind_na_sub = ind_dmr
+    n_star <- n_star_list[[1]]
+    
   
     methyl <- Y  
     methyl[k_star, n_star] <- NA
     
-    if(i %in% c(1,4,7)){
+    if(i == 1){
       
       ind_na = is.na(methyl)
       time = system.time({
@@ -111,7 +101,7 @@ run_model_on_chromosome <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,al
         })[3]
         model = "LMCC"
         
-      }else if(i %in% c(2,5,8)){
+      }else if(i == 2){
         ind_na = is.na(methyl)
         time = system.time({
           obj_gasp =  fit_fgasp(methyl, sites)
@@ -121,7 +111,7 @@ run_model_on_chromosome <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,al
         })[3]
         model = "GASP"
 
-      }else if(i %in% c(3,6,9)){
+      }else if(i == 3){
         ind_na = is.na(methyl)
         time = system.time({Y_pred = apply(methyl,2,function(x) {
           x[is.na(x)] = mean(x,na.rm=T) 
@@ -134,13 +124,8 @@ run_model_on_chromosome <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,al
                      R2_dmr =  R2(Y[k_star, ind_na_sub],  Y_pred[k_star, ind_na_sub]),
                      time = time, model = model, n_star = length(n_star), miss_all = round(sum(ind_na)/(N*K),3))
     
-    if(i %in% 1:3){
-      out$scenario = "1"
-    }else if(i %in% 4:6){
-      out$scenario = "3"
-    }else if(i %in% 7:9){
-      out$scenario = "4"
-    }
+    
+    out$scenario = "4"
     
     out
   }
@@ -156,7 +141,8 @@ run_model_on_chromosome <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,al
            miss_c = round(k_star/K,2))
   row.names(res) <- NULL
   print(res)
-  save(res, file = paste0("results/res_dmr1_",chromosome,"_MaleOnly_",Male.Only,"_AgeOnly_",
+  save(res, file = paste0("results/res_dmr1_",chromosome,
+                          "Scenario_4_MaleOnly_",Male.Only,"_AgeOnly_",
                                                  Age.Only,"_",alpha,"x",min_freq, note, ".Rdata"))
   return(res) 
 }

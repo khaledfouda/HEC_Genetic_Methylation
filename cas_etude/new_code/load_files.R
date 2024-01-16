@@ -38,5 +38,5 @@ source("new_code/clean_v2_2_combine_feathers.R")
 source("new_code/analyze_1_compute_p_values.R")
 source("new_code/analyze_2_compute_dmr.R")
 source("new_code/analyze_3_fit_models.R")
-
+source("new_code/analyze_4_fit_models_scenario4.R")
 #source("new_code/results_1_analyze.R")

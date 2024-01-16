@@ -9,10 +9,9 @@ get_dmr_regions <- function(p_values, sites, alpha=0.1, floor_by=1e7, min_freq=2
    #' if return_seq = FALSE: then a list of sites where the p_value is smaller than alpha/N is returned for middle_point=TRUE
    #' and  a list of starting positions of chosen regions for middle_point = FALSE
    
-   N = length(sites)
    
    if(middle_point == TRUE){
-      loci = sort(sites[which(p_values < (alpha/N))])
+      loci = sort(sites[which(p_values < alpha)])
       if(is_empty(loci)) return(loci)
       if(return_seq == TRUE){
          sequen = c()
@@ -28,7 +27,7 @@ get_dmr_regions <- function(p_values, sites, alpha=0.1, floor_by=1e7, min_freq=2
       return(loci)
    }
    
-   as.data.frame(table(floor(sites[which(p_values < (alpha/N))] / floor_by) * floor_by)) %>%
+   as.data.frame(table(floor(sites[which(p_values < alpha)] / floor_by) * floor_by)) %>%
       arrange(desc(Freq)) %>%
       filter(Freq >= min_freq) -> results
    if(return_seq == TRUE){
