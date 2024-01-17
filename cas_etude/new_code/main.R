@@ -61,11 +61,11 @@ for(alpha in alphas)
 #----------- 
 # END
 # BiocManager::install("GenomicFeatures")
-# library(GenomicFeatures)
+# library(GenomicFeatures) 
 # BiocManager::install("RMariaDB")
 # library(rtracklayer)
 # # Example: Download human gene annotations 
-# txdb <- makeTxDbFromEnsembl(organism = "Homo sapiens", release = 75)
+# txdb <- makeTxDbFromEnsembl(organism = "Homo sapiens", release = 75) 
 # 
 # 
 # genes <- genes(txdb)
@@ -74,7 +74,7 @@ for(alpha in alphas)
 # library(GenomicRanges) 
 # wgbs_data <- import.bed("path_to_your_wgbs_file.bed")
 # # Find overlaps
-# overlaps <- findOverlaps(wgbs_data, genes)
+# overlaps <- findOverlaps(wgbs_data, genes) 
 # 
 # # Extract overlapping WGBS sites
 # overlapping_wgbs <- wgbs_data[queryHits(overlaps), ]
