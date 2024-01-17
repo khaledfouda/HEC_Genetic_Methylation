@@ -25,7 +25,7 @@ run_model_on_chromosome <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,al
 
   N = ncol(Y)
   K = nrow(Y)
-  
+   
   corrected_alpha = correction(alpha, N)
   dmr_regions = get_dmr_regions(p_values, sites, corrected_alpha, floor_by = floor_by,
                                 min_freq = min_freq, middle_point = middle_point, return_seq = T)

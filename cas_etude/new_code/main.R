@@ -21,7 +21,7 @@ note = "_subset_Blood"
 
 
 
-chromosomes = paste0("chr", c(2:12,17))
+chromosomes = paste0("chr", c(6:12,17))
 
 for(chr in chromosomes)
    combine_feathers_to_rds(chromosome = chr,condition_post = condition_post,note = note)
@@ -55,7 +55,7 @@ for(chr in chromosomes){
 }    
 #------------------
 # visualize results
-results = get_results_data()
+results = get_results_data() 
 for(alpha in alphas)  
    print(get_graph(results, alpha_val =  alpha))    
 #-----------
