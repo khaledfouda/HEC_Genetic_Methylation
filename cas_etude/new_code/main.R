@@ -13,9 +13,13 @@ alphas = c(.05, 0.1, 0.2)
 condition_pre = "DONOR_SEX == 'Male' & TISSUE_TYPE != 'Venous blood'"
 condition_pre = "is.na(DONOR_SEX) & TISSUE_TYPE != 'Venous blood'"
 
-condition_post = "(AGE != 2.5) & (BONE_MARROW == 1) & (! SAMPLE_ID %in% c(7,17,56,36))"
+#(BONE_MARROW == 1)
+condition_post = "(AGE != 2.5)  & (BONE_MARROW == 0) & (! SAMPLE_ID %in% c(7,17,56,36))"
 
-note = "_subset_BONE_"
+#note = "_subset_BONE_"
+note = "_subset_Blood"
+
+
 
 chromosomes = paste0("chr", c(2:12,17))
 
@@ -30,29 +34,56 @@ for(chr in chromosomes)
 alphas = c(1e-4)
 correction =  function(alpha,N) alpha
 
-chromosome = chr; load_p_values = T; alpha=alpha;
-min_freq=1; middle_point=TRUE; floor_by=1e3; plot=TRUE; note = note
+# chromosome = chr; load_p_values = T; alpha=alpha;
+# min_freq=1; middle_point=TRUE; floor_by=1e3; plot=TRUE; note = note
 
 for(chr in chromosomes){
    print(chr)
-   for(alpha in alphas)
-      compute_p_values_and_plot(chromosome = chr, load_p_values = T, alpha=alpha, Male.Only = FALSE,
+   for(alpha in alphas) 
+      compute_p_values_and_plot(chromosome = chr, load_p_values = F, alpha=alpha, Male.Only = FALSE,
                                 min_freq=1, middle_point=TRUE, floor_by=1e3, plot=TRUE, note = note,
-                                correction = correction)
+                                correction = correction) 
 }
 # fit model: - warning: slow!
 for(chr in chromosomes){
    print(chr)
    for(alpha in alphas)
-   res = run_model_on_chromosome_dmr(chr, subset=10000, min_freq = 1, no_cores = 3, 
+   res = run_model_on_chromosome(chr, subset=NA, min_freq = 1, no_cores = 2, 
                                  middle_point=TRUE, floor_by=1e3,
                           alpha=alpha, Male.Only = FALSE, Age.Only = TRUE,
-                          note = note, correction=correction)
-}
+                          note = note, correction=correction) 
+}    
 #------------------
 # visualize results
 results = get_results_data()
-for(alpha in alphas) 
-   print(get_graph(results, alpha_val =  alpha))   
+for(alpha in alphas)  
+   print(get_graph(results, alpha_val =  alpha))    
 #-----------
 # END
+# BiocManager::install("GenomicFeatures")
+# library(GenomicFeatures)
+# BiocManager::install("RMariaDB")
+# library(rtracklayer)
+# # Example: Download human gene annotations
+# txdb <- makeTxDbFromEnsembl(organism = "Homo sapiens", release = 75)
+# 
+# 
+# genes <- genes(txdb)
+# head(genes)
+# export.bed(genes, "gene_annotations.bed")
+# library(GenomicRanges)
+# wgbs_data <- import.bed("path_to_your_wgbs_file.bed")
+# # Find overlaps
+# overlaps <- findOverlaps(wgbs_data, genes)
+# 
+# # Extract overlapping WGBS sites
+# overlapping_wgbs <- wgbs_data[queryHits(overlaps), ]
+# 
+# # Extract overlapping genes
+# overlapping_genes <- genes[subjectHits(overlaps), ]
+# library(Gviz)
+# 
+# # Example visualization
+# plotTracks(list(GenomeAxisTrack(), AnnotationTrack(genes), DataTrack(wgbs_data)), 
+#            from = <start_region>, to = <end_region>)
+  

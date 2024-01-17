@@ -67,7 +67,7 @@ run_model_on_chromosome_dmr <- function(chromosome, Age.Only=TRUE, Male.Only=TRU
   
   #---------------
   n_star_list = list(sort(ind_dmr)) #scenario 4
-  
+  n_star_list = list(sort(unique(c(round(seq(1,N,length.out=round(N*0.9))),ind_dmr))))
   
   if(no_cores > 1){
     cl <- makeCluster(no_cores)
@@ -149,7 +149,7 @@ run_model_on_chromosome_dmr <- function(chromosome, Age.Only=TRUE, Male.Only=TRU
   }
    
 
-  #stopCluster(cl)
+  if(no_cores > 1) stopCluster(cl)
 
   res = as.data.frame(results) %>%
     arrange(scenario) %>%  

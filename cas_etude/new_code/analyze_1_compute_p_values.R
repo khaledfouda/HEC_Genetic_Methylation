@@ -42,7 +42,7 @@ compute_p_values_and_plot <- function(chromosome, load_p_values=TRUE, Male.Only=
    }
    
    if(plot == TRUE){
-      filename = paste0("./graphs/manhattan_plot_",chromosome,"_alpha_",alpha,"_Male", note, ".png")
+      filename = paste0("./graphs/manhattan_plot_",chromosome,"_alpha_",alpha, note, ".png")
       print(paste("Saving plot to ",filename))
       corrected_alpha = correction(alpha, N)
       
@@ -66,7 +66,8 @@ compute_p_values_and_plot <- function(chromosome, load_p_values=TRUE, Male.Only=
          theme_minimal() +
          #scale_x_continuous(limits=c(0,2e8))+
          xlab("Methylation Site") +
-         ylab("-log10(Adjusted P-value)") +
+         ylab("-log10(P-value)") +
+         geom_hline(yintercept = -log10(corrected_alpha), linetype = "dashed", color = "red")+
          geom_hline(yintercept = -log10((.05/ N)), linetype = "dashed", color = "red")+ 
          geom_hline(yintercept = -log10((0.1/ N)), linetype = "dashed", color = "red")+ 
          geom_hline(yintercept = -log10((0.2/ N)), linetype = "dashed", color = "red")+ 
