@@ -71,7 +71,7 @@ for(alpha in alphas)
 # genes <- genes(txdb)
 # head(genes)
 # export.bed(genes, "gene_annotations.bed")
-# library(GenomicRanges)
+# library(GenomicRanges) 
 # wgbs_data <- import.bed("path_to_your_wgbs_file.bed")
 # # Find overlaps
 # overlaps <- findOverlaps(wgbs_data, genes)
