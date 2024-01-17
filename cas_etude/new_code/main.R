@@ -58,13 +58,13 @@ for(chr in chromosomes){
 results = get_results_data() 
 for(alpha in alphas)  
    print(get_graph(results, alpha_val =  alpha))    
-#-----------
+#----------- 
 # END
 # BiocManager::install("GenomicFeatures")
 # library(GenomicFeatures)
 # BiocManager::install("RMariaDB")
 # library(rtracklayer)
-# # Example: Download human gene annotations
+# # Example: Download human gene annotations 
 # txdb <- makeTxDbFromEnsembl(organism = "Homo sapiens", release = 75)
 # 
 # 
