@@ -66,13 +66,13 @@ for(alpha in alphas)
 # library(rtracklayer)
 # # Example: Download human gene annotations 
 # txdb <- makeTxDbFromEnsembl(organism = "Homo sapiens", release = 75) 
-# 
+#  
 # 
 # genes <- genes(txdb)
 # head(genes)
 # export.bed(genes, "gene_annotations.bed")
 # library(GenomicRanges) 
-# wgbs_data <- import.bed("path_to_your_wgbs_file.bed")
+# wgbs_data <- import.bed("path_to_your_wgbs_file.bed") 
 # # Find overlaps
 # overlaps <- findOverlaps(wgbs_data, genes) 
 # 
