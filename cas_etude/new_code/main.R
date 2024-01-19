@@ -5,6 +5,7 @@ setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude")
 source("new_code/load_files.R")
 #------------------------------------------
 chromosomes = paste0("chr", c(7,8,11,12,17))
+chromosomes = c("chr1")
 alphas = c(.05, 0.1, 0.2)
 #---------------------------------------------
 # clean
@@ -21,7 +22,6 @@ note = "_subset_Blood"
 
 
 
-chromosomes = paste0("chr", c(6:12,17))
 
 for(chr in chromosomes)
    combine_feathers_to_rds(chromosome = chr,condition_post = condition_post,note = note)
