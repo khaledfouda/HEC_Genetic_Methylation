@@ -11,11 +11,11 @@ note = "_subset_Blood"
 correction <- function(alpha,N) alpha
 alpha = 1e-4
 region_length <- 1e3
-dmr.info <- data.frame()
+dmr.info <- methyl.info <- data.frame()
 
 run_code = FALSE
 if(run_code){
-   for(chromosome in paste0("chr",c(2:12,17))){
+   for(chromosome in paste0("chr",c(1:12,17))){
       print(chromosome)
       sites = readRDS(paste0("new_data/sites_common_",chromosome, note, ".rds"))
       p_values = readRDS(paste0("new_data/p_values_",chromosome, note, ".rds"))
@@ -32,33 +32,149 @@ if(run_code){
          sequen[i] = length(which(sites %in%  (start_site: end_site)))
       }
       
-      
-      #%%%%%%%%%%
-      l = 367698
-      start_site = l-step_size
-      end_site = l + step_size
-      length(which(sites %in%  (start_site: end_site)))
-      
-      #%%%%%%%%%
-      
       data.frame(chromosome = chromosome, site=loci, region_length=sequen) %>%
          rbind(dmr.info) ->
          dmr.info
       
-      saveRDS(dmr.info, paste0("new_data/dmr_info_",note, ".rds"))
-   
+      #-------------------------
+      # Get Methylation info
+      dmr_regions = get_dmr_regions(p_values, sites, alpha, floor_by = region_length,
+                                     middle_point = T, return_seq = T)
+      ind_dmr = sort(which(sites %in% dmr_regions))
+      #sites = sites[ind_dmr]
+      Y = readRDS(paste0("new_data/Ydat_common_",chromosome, note, ".rds"))
+      Y = colMeans(Y)
+      # data.frame(chromosome = chromosome, site = sites, Methylation = Y[ind_dmr]) %>%
+      data.frame(chromosome = chromosome, site = sites, Methylation = Y, dmr = 1:N) %>%
+         mutate(dmr = ifelse(dmr %in% ind_dmr, TRUE, FALSE)) %>% 
+         rbind(methyl.info) ->
+         methyl.info
+      
    }
+   saveRDS(dmr.info, paste0("new_data/dmr_info_",note, ".rds"))
+   saveRDS(methyl.info, paste0("new_data/methyl_info_",note, ".rds"))
+   
 }
 dmr.info <- readRDS(paste0("new_data/dmr_info_",note, ".rds"))
+methyl.info <- readRDS(paste0("new_data/methyl_info_",note, ".rds"))
+
 
 dmr.info %>%
-   mutate(chromosome = as.factor(chromosome)) %>% 
-   group_by(chromosome) %>%
-   summarise(mean(region_length)) %>%
-   arrange(`mean(region_length)`) %>% 
-   ggplot(aes(reorder(chromosome,`mean(region_length)`), `mean(region_length)`)) +
-   geom_bar(stat = "identity")
+   mutate(chromosome = as.numeric(gsub("chr", "", chromosome))) %>%
+   filter(region_length != 0) %>% 
+   group_by(chromosome) %>% 
+   summarise(num_DMR = length(site), 
+             num_sites_in_DMR = sum(region_length)) %>%
+   ungroup() %>%
+   arrange(chromosome) %>%
+   mutate(chromosome = as.factor(chromosome)) %>%
+   kable(format = "pipe")
 
+
+methyl.info %>%
+   mutate(chromosome = as.numeric(gsub("chr", "", chromosome))) %>%
+   arrange(chromosome) %>%
+   mutate(chromosome = as.factor(chromosome)) %>%
+   #filter(chromosome == 17) %>% 
+   ggplot(aes(group=chromosome)) +
+   geom_histogram(aes(Methylation,y=after_stat(scaled))) +
+   facet_wrap(~ dmr, nrow=2)
+
+
+
+methyl.info %>%
+   mutate(chromosome = as.numeric(gsub("chr", "", chromosome))) %>%
+   arrange(chromosome) %>%
+   #sample_n(1e6) %>% 
+   mutate(dmr = ifelse(dmr==TRUE, "DMR", "Not DMR")) %>% 
+   mutate(chromosome = as.factor(chromosome)) %>%
+   ggplot(aes(x = Methylation, group = chromosome)) +
+   #geom_histogram( bins = 30, fill = "steelblue", color = "black") +
+   geom_density(aes(y=after_stat(scaled)), fill="steelblue", color="black",alpha=0.01) +
+   facet_wrap(~ dmr, nrow = 2) +
+   theme_minimal() +
+   labs(
+      title = "Methylation Distribution Comparison between DMR and non-DMR sites",
+      subtitle = "Different lines for different chromosomes",
+      x = "Methylation Level",
+      y = "Density"
+   ) +
+   theme(
+      plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+      axis.title.x = element_text(size = 12),
+      axis.title.y = element_text(size = 12),
+      strip.text = element_text(size = 12, face = "bold"), 
+      axis.text.x = element_text(angle = 0, hjust = 1),
+      panel.spacing = unit(1, "lines"),
+      plot.background = element_blank(),
+      #panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank()
+   )
+
+
+library(dplyr)
+library(ggplot2)
+
+methyl.info %>%
+   filter(dmr == TRUE) %>%
+   mutate(chromosome = as.numeric(gsub("chr", "", chromosome))) %>%
+   arrange(desc(chromosome)) %>%
+   mutate(chromosome = as.factor(chromosome)) %>%
+   ggplot(aes(x = site, y = chromosome)) +
+   geom_point(alpha = 1, color = "steelblue", size = 1) +  
+   theme_minimal() +
+   labs(
+      title = "DMRs' Sites location per Chromosome",
+      subtitle = "To visually identify common DMR sites among chromosomes, if any.",
+      x = "Site",
+      y = "Chromosome"
+   ) +
+   theme(
+      plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+      axis.title.x = element_text(size = 12),
+      axis.title.y = element_text(size = 12),
+      axis.text.x = element_text(angle = 0, hjust = 1),
+      axis.text.y = element_text(angle = 0, vjust = 1),
+      panel.grid = element_blank()
+   )
+
+
+methyl.info %>%
+   filter(dmr == TRUE) %>% 
+   mutate(chromosome = as.numeric(gsub("chr", "", chromosome))) %>%
+   arrange(chromosome) %>%
+   mutate(chromosome = as.factor(chromosome)) %>%
+   ggplot(aes(x = site, y= chromosome)) +
+   geom_point()
+   #geom_histogram( bins = 30, fill = "steelblue", color = "black") 
+   #geom_density(aes(y=after_stat(scaled)), fill="steelblue", color="black",alpha=0.01) +
+   
+
+plot(density(Y))
+
+
+library(dplyr)
+library(ggplot2)
+
+dmr.info %>%
+   mutate(chromosome = as.numeric(gsub("chr", "", chromosome))) %>%
+   filter(region_length != 0, chromosome != 9) %>%
+   ggplot(aes(x = region_length)) +
+   geom_histogram(bins = 100, fill = "steelblue", color = "black") +
+   theme_minimal() +
+   labs(
+      title = "Distribution of Number of Sites per Single DMR",
+      x = "Number of Sites",
+      y = "Count"
+   ) +
+   theme(
+      plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+      axis.title.x = element_text(size = 12, colour = "steelblue", face="bold"),
+      axis.title.y = element_text(size = 12, colour = "steelblue", face="bold"),
+      axis.text.x = element_text(angle = 0, hjust = 1, face = "bold", color="red"),
+      axis.text.y = element_text(angle = 0, hjust = 1, face = "bold", color="red")
+   ) +
+   facet_wrap(~chromosome, labeller = label_both)
 
 
 

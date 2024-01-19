@@ -6,9 +6,9 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = F, eval = T)
+knitr::opts_chunk$set(echo = F, eval = T, cache = TRUE)
 library(tidyverse)
-
+library(knitr)
 ```
 
 ```{r fig.height=8, fig.width=8}
@@ -24,43 +24,8 @@ alpha = 1e-4
 region_length <- 1e3
 dmr.info <- data.frame()
 
-run_code = FALSE
-if(run_code){
-   for(chromosome in paste0("chr",c(2:12,17))){
-      print(chromosome)
-      sites = readRDS(paste0("new_data/sites_common_",chromosome, note, ".rds"))
-      p_values = readRDS(paste0("new_data/p_values_",chromosome, note, ".rds"))
-      N = length(sites)
-      alpha = correction(alpha, N)
-      loci = sort(sites[which(p_values < alpha)])
-      sequen = numeric(length(loci))
-      step_size = round(region_length/2)
-      end_site = 1
-      
-      for(i in 1:length(loci)){
-         start_site = max( end_site, loci[i]-step_size)
-         end_site = loci[i] + step_size
-         sequen[i] = length(which(sites %in%  (start_site: end_site)))
-      }
-      
-      
-      #%%%%%%%%%%
-      l = 367698
-      start_site = l-step_size
-      end_site = l + step_size
-      length(which(sites %in%  (start_site: end_site)))
-      
-      #%%%%%%%%%
-      
-      data.frame(chromosome = chromosome, site=loci, region_length=sequen) %>%
-         rbind(dmr.info) ->
-         dmr.info
-      
-      saveRDS(dmr.info, paste0("new_data/dmr_info_",note, ".rds"))
-   
-   }
-}
 dmr.info <- readRDS(paste0("new_data/dmr_info_",note, ".rds"))
+methyl.info <- readRDS(paste0("new_data/methyl_info_",note, ".rds"))
 
 # dmr.info %>%
 #    mutate(chromosome = as.factor(chromosome)) %>% 
@@ -69,6 +34,136 @@ dmr.info <- readRDS(paste0("new_data/dmr_info_",note, ".rds"))
 #    arrange(`mean(region_length)`) %>% 
 #    ggplot(aes(reorder(chromosome,`mean(region_length)`), `mean(region_length)`)) +
 #    geom_bar(stat = "identity")
+```
+
+
+```{r fig.height=8, fig.width=8}
+
+
+dmr.info %>%
+   mutate(chromosome = as.numeric(gsub("chr", "", chromosome))) %>%
+   filter(region_length != 0) %>% 
+   group_by(chromosome) %>% 
+   summarise(`# of DMRs` = length(site), 
+             `# of sites in DMRs` = sum(region_length)) %>%
+   ungroup() %>%
+   arrange(chromosome) %>%
+   mutate(chromosome = as.factor(chromosome)) %>%
+   kable(format = "pipe")
+
+
+
+
+```
+
+
+```{r fig.height=10, fig.width=10}
+
+dmr.info %>%
+   mutate(chromosome = as.numeric(gsub("chr", "", chromosome))) %>%
+   filter(region_length != 0, chromosome !=9, chromosome <=6) %>%
+   ggplot(aes(x = region_length)) +
+   geom_histogram(bins = 100, fill = "steelblue", color = "black") +
+   theme_minimal() +
+   labs(
+      title = "Distribution of Number of Sites per Single DMR",
+      x = "Number of Sites",
+      y = "Count"
+   ) +
+   theme(
+      plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+      axis.title.x = element_text(size = 12, colour = "steelblue", face="bold"),
+      axis.title.y = element_text(size = 12, colour = "steelblue", face="bold"),
+      axis.text.x = element_text(angle = 0, hjust = 1, face = "bold", color="red"),
+      axis.text.y = element_text(angle = 0, hjust = 1, face = "bold", color="red")
+   ) +
+   facet_wrap(~chromosome, labeller = label_both, nrow=3)
+
+
+```
+
+
+```{r fig.height=10, fig.width=10}
+
+dmr.info %>%
+   mutate(chromosome = as.numeric(gsub("chr", "", chromosome))) %>%
+   filter(region_length != 0, chromosome !=9, chromosome >6) %>%
+   ggplot(aes(x = region_length)) +
+   geom_histogram(bins = 100, fill = "steelblue", color = "black") +
+   theme_minimal() +
+   labs(
+      title = "Distribution of Number of Sites per Single DMR",
+      x = "Number of Sites",
+      y = "Count"
+   ) +
+   theme(
+      plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+      axis.title.x = element_text(size = 12, colour = "steelblue", face="bold"),
+      axis.title.y = element_text(size = 12, colour = "steelblue", face="bold"),
+      axis.text.x = element_text(angle = 0, hjust = 1, face = "bold", color="red"),
+      axis.text.y = element_text(angle = 0, hjust = 1, face = "bold", color="red")
+   ) +
+   facet_wrap(~chromosome, labeller = label_both, nrow=3)
+
+
+```
+
+```{r fig.height=8, fig.width=8}
+methyl.info %>%
+   mutate(chromosome = as.numeric(gsub("chr", "", chromosome))) %>%
+   arrange(chromosome) %>%
+   mutate(dmr = ifelse(dmr==TRUE, "DMR", "Not DMR")) %>% 
+   mutate(chromosome = as.factor(chromosome)) %>%
+   ggplot(aes(x = Methylation, group = chromosome)) +
+   geom_density(aes(y=after_stat(scaled)), fill="steelblue", color="black",alpha=0.01) +
+   facet_wrap(~ dmr, nrow = 2) +
+   theme_minimal() +
+   labs(
+      title = "Methylation Distribution Comparison between DMR and non-DMR sites",
+      subtitle = "Different lines for different chromosomes",
+      x = "Methylation Level",
+      y = "Density"
+   ) +
+   theme(
+      plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+      axis.title.x = element_text(size = 12),
+      axis.title.y = element_text(size = 12),
+      strip.text = element_text(size = 12, face = "bold"), 
+      axis.text.x = element_text(angle = 0, hjust = 1),
+      panel.spacing = unit(1, "lines"),
+      plot.background = element_blank(),
+      panel.grid.minor = element_blank()
+   )
+
+```
+
+
+```{r fig.height=8, fig.width=8}
+
+methyl.info %>%
+   filter(dmr == TRUE) %>%
+   mutate(chromosome = as.numeric(gsub("chr", "", chromosome))) %>%
+   arrange(desc(chromosome)) %>%
+   mutate(chromosome = as.factor(chromosome)) %>%
+   ggplot(aes(x = site, y = chromosome)) +
+   geom_point(alpha = 1, color = "steelblue", size = 1) +  
+   theme_minimal() +
+   labs(
+      title = "DMRs' Sites location per Chromosome",
+      subtitle = "To visually identify common DMR sites among chromosomes, if any.",
+      x = "Site",
+      y = "Chromosome"
+   ) +
+   theme(
+      plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+      axis.title.x = element_text(size = 12),
+      axis.title.y = element_text(size = 12),
+      axis.text.x = element_text(angle = 0, hjust = 1),
+      axis.text.y = element_text(angle = 0, vjust = 1),
+      panel.grid = element_blank()
+   )
+
+
 ```
 
 
@@ -94,10 +189,10 @@ dmr.info %>%
       title = element_text(size = 14)
    ) +
    labs(
-      title = "Region Length by Chromosome",
-      subtitle = "Black lines are the mean +/- standard deviation;\nLight bars are the Max lengths;\nDark bars the average lengths.",
+      title = "Number of Sites per DMR Region by Chromosome",
+      subtitle = "Black lines are the mean +/- standard deviation;\nLight bars are the Max numbr of sites per region;\nDark bars are the average number of sites per region.",
       x = "Chromosome",
-      y = "Mean / Max Region Length"
+      y = "Number of Sites per Region"
    )
 ```
 
@@ -123,9 +218,9 @@ dmr.info %>%
       title = element_text(size = 14)
    ) +
    labs(
-      title = "Number of sites/p-values for each Chromosome",
-      subtitle = paste0("Number of sites: total number of sites chosen as DMR;",
-                        "\nNumber of p-values: Total number of p-values exceeding the threshold."),
+      title = "Number of DMRs/Sites for each Chromosome",
+      subtitle = paste0("Number of sites: total number of sites in the DMR;",
+                        "\nNumber of DMRs: Total number of Differentially Methylated Regions."),
       x = "Chromosome",
       y = ""
    )
@@ -148,13 +243,25 @@ dmr.info %>%
       title = element_text(size = 14)
    ) +
    labs(
-      title = "Distribution of Region Length Grouped by Chromosomes",
-      subtitle = paste0("The region of sites per chosen p-value."),
-      x = "Region Length",
+      title = "Distribution of the Number of Sites per DMR,",
+      subtitle = paste0("Grouped by Chromosomes."),
+      x = "Number of Sites",
       y = "Density"
    )
+```
 
 
+```{r fig.height=8, fig.width=8, echo=FALSE, out.width='100%', fig.align='center', results='asis'}
+for (chromosome in paste0("chr",c(1:12,17))) {
+   filename = paste0("../graphs/manhattan_plot_",chromosome,"_alpha_1e-04_subset_Blood.png")
+   #knitr::include_graphics(filename)
+     cat("![](", filename, ")\n\n")
+}
+
+```
+
+
+```{r fig.height=8, fig.width=8}
 # 
 # dmr.info %>% 
 #    filter(region_length != 0) %>% 
