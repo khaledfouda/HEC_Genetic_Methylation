@@ -4,9 +4,9 @@
 setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude")
 source("new_code/load_files.R")
 #------------------------------------------
-chromosomes = paste0("chr", c(7,8,11,12,17))
-chromosomes = c("chr1")
-alphas = c(.05, 0.1, 0.2)
+chromosomes = paste0("chr", c(2:12,17))
+#chromosomes = c("chr1")
+#alphas = c(.05, 0.1, 0.2)
 #---------------------------------------------
 # clean
 #transform_raw_to_feather(chromosome_to_retain = chromosomes)
@@ -53,10 +53,21 @@ for(chr in chromosomes){
                           alpha=alpha, Male.Only = FALSE, Age.Only = TRUE,
                           note = note, correction=correction) 
 }    
+# fit model but only on scenario 4
+for(chr in chromosomes){
+   print(chr)
+   for(alpha in alphas)
+      
+   res = run_model_on_chromosome_dmr(chr, Age.Only=TRUE, Male.Only=FALSE,alpha=alpha,
+                                        min_freq=1, min_k=2,subset=NA, no_cores=2,
+                                        floor_by=1e3, middle_point=TRUE, note = note,
+                                        correction = correction)
+}
+
 #------------------
 # visualize results
-results = get_results_data() 
-for(alpha in alphas)  
+results = get_results_data()  
+for(alpha in alphas)   
    print(get_graph(results, alpha_val =  alpha))    
 #----------- 
 # END

@@ -25,7 +25,9 @@ run_model_on_chromosome_dmr <- function(chromosome, Age.Only=TRUE, Male.Only=TRU
   corrected_alpha = correction(alpha, N)
   dmr_regions = get_dmr_regions(p_values, sites, corrected_alpha, floor_by = floor_by,
                                 min_freq = min_freq, middle_point = middle_point, return_seq = T)
-  ind_dmr = sort(which(sites %in% dmr_regions))
+  #ind_dmr = sort(which(sites %in% dmr_regions))
+  
+  ind_dmr = sort(unique(c(round(seq(1,N,length.out=round(N*0.1))))))
   
   if(!is.na(subset)){
     subset = unique(c(1:subset, ind_dmr))
@@ -159,7 +161,7 @@ run_model_on_chromosome_dmr <- function(chromosome, Age.Only=TRUE, Male.Only=TRU
            miss_c = round(k_star/K,2))
   row.names(res) <- NULL
   print(res)
-  save(res, file = paste0("results/res_dmr1_",chromosome,
+  save(res, file = paste0("results/res_FALSE_dmr1_",chromosome,
                           "Scenario_4_MaleOnly_",Male.Only,"_AgeOnly_",
                                                  Age.Only,"_",alpha,"x",min_freq, note, ".Rdata"))
   return(res) 
