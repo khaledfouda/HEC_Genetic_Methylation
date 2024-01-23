@@ -27,7 +27,7 @@ run_model_on_chromosome_dmr <- function(chromosome, Age.Only=TRUE, Male.Only=TRU
                                 min_freq = min_freq, middle_point = middle_point, return_seq = T)
   #ind_dmr = sort(which(sites %in% dmr_regions))
   
-  ind_dmr = sort(unique(c(round(seq(1,N,length.out=round(N*0.1))))))
+  ind_dmr = sort(unique(c(round(seq(1,N,length.out=round(N*0.01))))))
   
   if(!is.na(subset)){
     subset = unique(c(1:subset, ind_dmr))
@@ -69,7 +69,7 @@ run_model_on_chromosome_dmr <- function(chromosome, Age.Only=TRUE, Male.Only=TRU
   
   #---------------
   n_star_list = list(sort(ind_dmr)) #scenario 4
-  n_star_list = list(sort(unique(c(round(seq(1,N,length.out=round(N*0.9))),ind_dmr))))
+  #n_star_list = list(sort(unique(c(round(seq(1,N,length.out=round(N*0.9))),ind_dmr))))
   
   if(no_cores > 1){
     cl <- makeCluster(no_cores)
@@ -143,7 +143,7 @@ run_model_on_chromosome_dmr <- function(chromosome, Age.Only=TRUE, Male.Only=TRU
                      time = time, model = model, n_star = length(n_star), miss_all = round(sum(ind_na)/(N*K),3))
     
     
-    out$scenario = "4"
+    out$scenario = "5"
     
     #results = rbind(results, out)
     print(out)
@@ -161,8 +161,8 @@ run_model_on_chromosome_dmr <- function(chromosome, Age.Only=TRUE, Male.Only=TRU
            miss_c = round(k_star/K,2))
   row.names(res) <- NULL
   print(res)
-  save(res, file = paste0("results/res_FALSE_dmr1_",chromosome,
-                          "Scenario_4_MaleOnly_",Male.Only,"_AgeOnly_",
+  save(res, file = paste0("results/res_dmr1_",chromosome,
+                          "Scenario_5_MaleOnly_",Male.Only,"_AgeOnly_",
                                                  Age.Only,"_",alpha,"x",min_freq, note, ".Rdata"))
   return(res) 
 }
