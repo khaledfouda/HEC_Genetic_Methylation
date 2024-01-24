@@ -4,7 +4,7 @@
 setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude")
 source("new_code/load_files.R")
 #------------------------------------------
-chromosomes = paste0("chr", c(2:12,17))
+chromosomes = paste0("chr", c(1:12,17))
 #chromosomes = c("chr1")
 #alphas = c(.05, 0.1, 0.2)
 #---------------------------------------------
