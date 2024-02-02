@@ -50,7 +50,7 @@ for(chr in chromosomes){
    for(alpha in alphas)
    res = run_model_on_chromosome(chr, subset=NA, min_freq = 1, no_cores = 2, 
                                  middle_point=TRUE, floor_by=1e3,
-                          alpha=alpha, Male.Only = FALSE, Age.Only = TRUE,
+                          alpha=alpha, Male.Only = FALSE, Age.Only = FALSE,
                           note = note, correction=correction) 
 }    
 # fit model but only on scenario 4
@@ -67,7 +67,7 @@ for(chr in chromosomes){
 #------------------
 # visualize results
 results = get_results_data()  
-for(alpha in alphas)   
+for(alpha in alphas)    
    print(get_graph(results, alpha_val =  alpha))    
 #----------- 
 # END

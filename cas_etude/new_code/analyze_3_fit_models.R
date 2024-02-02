@@ -46,12 +46,13 @@ run_model_on_chromosome <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,al
     k_star <- k_star[-extra_k]
   }
   if(Age.Only == TRUE){
-    X = as.matrix(X[,"AGE"])
+    X = as.matrix(X[,"AGE"]) 
   }else{
     # check for columns with single values and drop them
-    cols_to_drop <- apply(X, 2, function(x) var(x, na.rm = TRUE) == 0)
-    X <- as.matrix(X[, !cols_to_drop])
-    print(dim(X))
+    X = as.matrix(X[,c("AGE", "MALE")]) 
+    #cols_to_drop <- apply(X, 2, function(x) var(x, na.rm = TRUE) == 0)
+    #X <- as.matrix(X[, !cols_to_drop])
+    #print(dim(X))
   }
   
   #---------------

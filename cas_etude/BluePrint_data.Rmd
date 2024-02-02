@@ -73,6 +73,11 @@ readRDS("new_data/Xdat_common_chr7.rds") %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 
 
+
+readRDS("new_data/Xdat_common_chr1_subset_Blood.rds") -> x #%>% as.data.frame %>%
+   dplyr::select(APL) %>% table()
+x[,c("AGE","MALE")]
+
 ```
 
 

@@ -29,7 +29,7 @@ select <- dplyr::select
 
 
 sourceAll(path="../functions/")
-
+select <- dplyr::select
 source("new_code/clean_v1_1_extract_chromosomes.R")
 source("new_code/clean_v1_2_combine_feathers.R")
 source("new_code/clean_v2_1_extract_chromosomes.R")
