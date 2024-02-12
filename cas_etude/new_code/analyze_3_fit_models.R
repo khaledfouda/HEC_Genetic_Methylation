@@ -8,6 +8,8 @@ run_model_on_chromosome <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,al
   X = readRDS(paste0("new_data/Xdat_common_",chromosome, note, ".rds")) %>%
     as.data.frame() %>% 
     mutate(AGE = (AGE - mean(AGE))/ sd(AGE) ) %>% 
+    mutate(FEMALE = 1 - MALE) %>%
+    mutate(MALE = (MALE - mean(MALE))/ sd(MALE)) %>%
     as.matrix()
   p_values = readRDS(paste0("new_data/p_values_",chromosome, note, ".rds"))
 
@@ -52,7 +54,8 @@ run_model_on_chromosome <- function(chromosome, Age.Only=TRUE, Male.Only=TRUE,al
     X = as.matrix(X[,c("AGE", "MALE")]) 
     #cols_to_drop <- apply(X, 2, function(x) var(x, na.rm = TRUE) == 0)
     #X <- as.matrix(X[, !cols_to_drop])
-    #print(dim(X))
+    print(dim(X))
+    print(X[1:3,])
   }
   
   #---------------

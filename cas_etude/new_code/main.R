@@ -4,7 +4,10 @@
 setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude")
 source("new_code/load_files.R")
 #------------------------------------------
-chromosomes = paste0("chr", c(1:12,17))
+chromosomes = paste0("chr", c(6:1))#c(7:12,17))
+note = "_subset_Blood"
+alphas = c(1e-4)
+correction =  function(alpha,N) alpha
 #chromosomes = c("chr1")
 #alphas = c(.05, 0.1, 0.2)
 #---------------------------------------------
@@ -18,8 +21,6 @@ condition_pre = "is.na(DONOR_SEX) & TISSUE_TYPE != 'Venous blood'"
 condition_post = "(AGE != 2.5)  & (BONE_MARROW == 0) & (! SAMPLE_ID %in% c(7,17,56,36))"
 
 #note = "_subset_BONE_"
-note = "_subset_Blood"
-
 
 
 
@@ -31,8 +32,7 @@ for(chr in chromosomes)
 #    combine_feathers_to_rds2(chromosome = chr)
 #---------------------
 # analyze
-alphas = c(1e-4)
-correction =  function(alpha,N) alpha
+
 
 # chromosome = chr; load_p_values = T; alpha=alpha;
 # min_freq=1; middle_point=TRUE; floor_by=1e3; plot=TRUE; note = note
@@ -53,6 +53,7 @@ for(chr in chromosomes){
                           alpha=alpha, Male.Only = FALSE, Age.Only = FALSE,
                           note = note, correction=correction) 
 }    
+
 # fit model but only on scenario 4
 for(chr in chromosomes){
    print(chr)
