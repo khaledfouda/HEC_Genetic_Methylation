@@ -9,9 +9,13 @@ alphas = c(1e-4)
 correction =  function(alpha,N) alpha
 #----------------------------------------------
 # Table 1
+dat.info.full <- read_tsv("./new_data/samples.tsv", show_col_types = FALSE) %>% 
+   mutate(bedFile = paste0("new_data/Gene_data/", bedFile)) %>%
+   select(DONOR_AGE, bedFile)
 
 
-set.seed(2022);readRDS("new_data/sample_info.rds") %>%
+set.seed(2022);readRDS("new_data/sample_info.rds") %>% 
+   merge(dat.info.full, by='bedFile') %>%
    mutate(DONOR_SEX = replace_na(DONOR_SEX, "Male")) %>% 
    sample_frac(replace = FALSE) %>% 
    group_by(DISEASE, DONOR_SEX) %>%
@@ -19,10 +23,11 @@ set.seed(2022);readRDS("new_data/sample_info.rds") %>%
    ungroup() %>% 
    sample_n(15)  %>%
    #dplyr::rename(AGE = DONOR_AGE, SEX=DONOR_SEX) %>% 
-   mutate(CELL_TYPE = mapply(function(x) stringr::str_trunc(x, 31),as.character(CELL_TYPE))) %>% 
-   select(-bedFile, -featherFile, -XY.ratio, - DONOR_HEALTH_STATUS,
-          -cellTypeShort,
-          -sampleGroup) ->
+   transmute(AGE = DONOR_AGE.y, SEX=DONOR_SEX, DISEASE = DISEASE, TISSUE_TYPE=TISSUE_TYPE,
+            CELL_TYPE = mapply(function(x) stringr::str_trunc(x, 31),as.character(CELL_TYPE))) ->
+   # select(-bedFile, -featherFile, -XY.ratio, - DONOR_HEALTH_STATUS,
+   #        -cellTypeShort,
+   #        -sampleGroup) ->
    dat.tab1
 
 tab1 <- xtable(dat.tab1, 
@@ -64,6 +69,8 @@ x %>% ggplot(aes(x = as.factor(AGE))) +
 ggsave("case2_fig1.png", p1, width = 5, height = 4, dpi = 300)
 #--------------------------------------------------------------------------
 # Fig2: 
+dmr.info <- readRDS(paste0("new_data/dmr_info_",note, ".rds"))
+dmr.info %>% group_by(chromosome) %>% summarise_all(length) %>% summarise_all(mean)
 
 
 dmr.info %>%
@@ -84,9 +91,11 @@ dmr.info %>%
    labs(
       x = "Chromosome", 
       y = "Count",
-      title = "Distribution of the number of regions and the number of sites within the regions per chromosomes"
+      title = "Correlated Regions by Chromosome"
+      #title = "Distribution of the number of regions and the number of sites within the regions per chromosomes"
    ) +
    theme(
+      #axis.text = element_text(face="bold"),
       plot.title = element_text(hjust = 0.5, size = 14, face = "bold"), 
       axis.title.x = element_text(size = 12, face = "bold"), 
       axis.title.y = element_text(size = 12, face = "bold"), 
@@ -112,7 +121,7 @@ dmr.info %>%
    ) %>%
    ungroup() %>%
    arrange(chromosome) %>%
-   mutate(chromosome = factor(chromosome)) %>% 
+   mutate(chromosome = factor(chromosome)) %>% #summarise_all(mean) 
    ggplot(aes(x = fct_inorder(chromosome), y = mean_length)) +
    geom_bar(stat = "identity", fill = "#FFA07A") + 
    geom_bar(aes(y = max_length), stat = "identity", fill = "#FFA07A", alpha = 0.5) + 
@@ -137,7 +146,7 @@ dmr.info %>%
       y = "Number of Sites"
    ) -> p3;p3
 
-ggsave("case2_fig3.png", p3, width = 8, height = 4, dpi = 300) 
+ggsave("case2_fig3.png", p3, width = 8, height = 6, dpi = 300) 
 #------------------------------------------------------------------------------------------
 
 methyl.info <- readRDS(paste0("new_data/methyl_info_",note, ".rds"))
@@ -155,7 +164,7 @@ methyl.info %>%
    facet_wrap(~ dmr, nrow = 2) +
    theme_minimal() +
    labs(
-      title = "Methylation Distribution Comparison Between Correlated and Uncorrelated Regions",
+      title = "Methylation in Correlated vs. Uncorrelated Regions",
       subtitle = "Different lines for different chromosomes",
       x = "Methylation Level",
       y = "Density"
@@ -172,7 +181,7 @@ methyl.info %>%
       legend.position = "none" 
    ) -> p4;p4
 
-ggsave("case2_fig4.png", p4, width = 8, height = 4, dpi = 300)  
+ggsave("case2_fig4.png", p4, width = 8, height = 6, dpi = 300)  
 #------------------------------------------------------------------------
 # figure 5
 
@@ -207,7 +216,7 @@ print(sum(manh.dat$color == "DMR"))
 
 
 gtitle <- "Manhattan Plot for Methylation Sites at Chromosome 2"
-gnote <- paste("Grey line indicates significance threshold at ", expression(1e-4))
+gnote <- paste("Grey line indicates significance threshold at", expression(1e-4))
 
 manh.dat2 %>% 
    ggplot(aes(x = Site, y = NegLogP, color = color)) +  
@@ -259,8 +268,8 @@ manh.dat2 %>%
 
 
 
-ggsave("case2_fig5_1.png", p5, width = 8, height = 4, dpi = 300)
-ggsave("case2_fig5_2.png", p6, width = 8, height = 4, dpi = 300)
+ggsave("case2_fig5_1.png", p5, width = 8, height = 6, dpi = 300)
+ggsave("case2_fig5_2.png", p6, width = 8, height = 6, dpi = 300)
 
 #-------------------------------------------------------------------------------------------------
 
