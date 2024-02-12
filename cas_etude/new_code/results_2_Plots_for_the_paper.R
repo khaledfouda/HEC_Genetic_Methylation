@@ -270,8 +270,8 @@ manh.dat3 %>%
 
 
 
-ggsave("case2_fig5_1.png", p5, width = 6, height = 6, dpi = 300)
-ggsave("case2_fig5_2.png", p6, width = 6, height = 6, dpi = 300)
+ggsave("case2_fig5_1.png", p5, width = 8, height = 8, dpi = 300)
+ggsave("case2_fig5_2.png", p6, width = 8, height = 8, dpi = 300)
 
 #-------------------------------------------------------------------------------------------------
 
