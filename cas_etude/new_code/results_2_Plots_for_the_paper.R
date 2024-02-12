@@ -210,7 +210,7 @@ data.frame(x = 1:N, Site= sites, NegLogP = - log10(p_values)) %>%
    manh.dat3
 
 
-print(sum(manh.dat$color == "DMR"))
+
 #---------------------------------------------------------------------
 #--------------------------------------------------------------------
 
@@ -236,14 +236,16 @@ manh.dat2 %>%
       plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
       axis.title.x = element_text(size = 12, face = "bold"),
       axis.title.y = element_text(size = 12, face = "bold"),
+      strip.text = element_text(size = 12, face = "bold"),
+      
       legend.position = "top"  ,
       legend.title =  element_blank(),
       legend.text =  element_text(size = 12, face = "bold")
-   ) -> p5; p5
+   ) -> p5; #p5
 
 gtitle <- "Manhattan Plot for Methylation Sites at Chromosome 3"
 
-manh.dat2 %>% 
+manh.dat3 %>% 
    ggplot(aes(x = Site, y = NegLogP, color = color)) +  
    geom_point( size=0.5) +
    scale_color_manual(values = c( "#cc0000","#FFD07A"), 
@@ -264,12 +266,12 @@ manh.dat2 %>%
          legend.position = "top"  ,
          legend.title =  element_blank(),
          legend.text =  element_text(size = 12, face = "bold")
-   ) -> p6; p6
+   ) -> p6; #p6
 
 
 
-ggsave("case2_fig5_1.png", p5, width = 8, height = 6, dpi = 300)
-ggsave("case2_fig5_2.png", p6, width = 8, height = 6, dpi = 300)
+ggsave("case2_fig5_1.png", p5, width = 6, height = 6, dpi = 300)
+ggsave("case2_fig5_2.png", p6, width = 6, height = 6, dpi = 300)
 
 #-------------------------------------------------------------------------------------------------
 
