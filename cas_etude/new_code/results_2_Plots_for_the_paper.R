@@ -156,7 +156,7 @@ methyl.info <- readRDS(paste0("new_data/methyl_info_",note, ".rds"))
 methyl.info %>%
    mutate(chromosome = as.numeric(gsub("chr", "", chromosome))) %>%
    arrange(chromosome) %>%
-   mutate(dmr = ifelse(dmr == TRUE, "Correlated", "Uncorrelated")) %>% 
+   mutate(dmr = ifelse(dmr == TRUE, "Sites in significant regions", "Sites in non significant regions")) %>% 
    mutate(chromosome = factor(chromosome)) %>%
    ggplot(aes(x = Methylation, group = chromosome)) +
    geom_density(aes( y=after_stat(scaled)),
@@ -164,8 +164,8 @@ methyl.info %>%
    facet_wrap(~ dmr, nrow = 2) +
    theme_minimal() +
    labs(
-      title = "Methylation in Correlated vs. Uncorrelated Regions",
-      subtitle = "Different lines for different chromosomes",
+      title = "Distribution of Methylation Levels",
+      #subtitle = "Different lines for different chromosomes",
       x = "Methylation Level",
       y = "Density"
    ) +
