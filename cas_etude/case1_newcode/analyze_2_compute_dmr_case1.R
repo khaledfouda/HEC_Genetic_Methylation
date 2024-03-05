@@ -3,7 +3,8 @@ get_dmr_regions_case1 <-
           sites,
           alpha = 1e-4,
           floor_by = 1e3,
-          return_seq = TRUE) {
+          return_seq = TRUE,
+          correction = FALSE) {
   #' if middle_point = FALSE then the sites are divided into equal regions of size floor_by and a region is considered
   #' dmr if it has at least min_freq of points below alpha/N.
   #' set return_seq = TRUE to return a list of all possible sites in the dmr regions
@@ -13,8 +14,9 @@ get_dmr_regions_case1 <-
   #' and  a list of starting positions of chosen regions for middle_point = FALSE
   
   N = length(sites)
+  if(correction) alpha = alpha / N
   
-  loci = sort(sites[which(p_values < (alpha / N))])
+  loci = sort(sites[which(p_values < alpha)])
   if (!return_seq)
    return(loci)
   
