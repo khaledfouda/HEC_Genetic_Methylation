@@ -3,11 +3,10 @@ source("new_code/load_files.R")
 library(xtable)
 
 #------------------------------------------
-chromosomes = paste0("chr", c(1:12, 17))
-note = "_subset_Blood"
-alphas = c(1e-4)
+alphas = c(1e-10)
 correction =  function(alpha, N)
    alpha
+note = "alphae10"
 #----------------------------------------------
 
 #-------------------------------------------------------------------------
@@ -177,10 +176,10 @@ data.frame(x = 1:N,
 
 
 gtitle <-
-   "Manhattan Plot for Methylation Sites"
+   "Manhattan Plot for Methylation Sites at Chromosome 1"
 gnote <-
    paste("Grey line indicates significance threshold at",
-         expression(alpha))
+         expression(1e-10))
 
 manh.dat2 %>%
    ggplot(aes(x = Site, y = NegLogP, color = color)) +

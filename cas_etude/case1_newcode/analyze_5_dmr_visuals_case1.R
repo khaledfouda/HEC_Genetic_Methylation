@@ -1,11 +1,12 @@
 library(tidyverse)
 
-note = ""
+note = "alphae10"
 correction <- function(alpha, N)
- alpha / N
-alpha = .05
+ alpha 
+alpha = 1e-10
 region_length <- 1e3
 dmr.info <- methyl.info <- data.frame()
+
 
 # load data
 source("methyl_func.R")
@@ -23,7 +24,7 @@ colnames(Y) = rownames(Y) = NULL
 X1 = c(rep("Gifford", 8), rep("roadmap1", 7))
 X = c(rep(1, 8), rep(0, 7))
 sites = Index_seq
-p_values = readRDS(paste0("new_data/case1_p_values",note, ".rds"))
+p_values = readRDS(paste0("new_data/case1_p_values", ".rds"))
 #------------
 
 N = length(sites)
@@ -49,7 +50,8 @@ dmr_regions <- get_dmr_regions_case1(p_values,
                                      sites,
                                      alpha,
                                      floor_by = region_length,
-                                     return_seq = TRUE)
+                                     return_seq = TRUE,
+                                     correction = FALSE)
 
 ind_dmr = sort(which(sites %in% dmr_regions))
 
