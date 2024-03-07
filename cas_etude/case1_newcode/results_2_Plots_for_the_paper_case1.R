@@ -246,17 +246,17 @@ res %>%
 
 head(data)
 
-data <- data.frame(
-   Scenario = rep(c(
-      "Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4"
-   ), each = 3),
-   Method = rep(c("LMCC", "GaSP", "Naive"), 4),
-   RMSE = runif(12, 0.1, 0.3),
-   Q2 = runif(12, 0.1, 0.9),
-   RMSE_dmr = c(rep(NA, 3), runif(9, 0.1, 0.3)),
-   Q2_dmr = c(rep(NA, 3), runif(9, 0.1, 0.9)),
-   Computation_time = runif(12, 0.1, 35)
-)
+# data <- data.frame(
+#    Scenario = rep(c(
+#       "Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4"
+#    ), each = 3),
+#    Method = rep(c("LMCC", "GaSP", "Naive"), 4),
+#    RMSE = runif(12, 0.1, 0.3),
+#    Q2 = runif(12, 0.1, 0.9),
+#    RMSE_dmr = c(rep(NA, 3), runif(9, 0.1, 0.3)),
+#    Q2_dmr = c(rep(NA, 3), runif(9, 0.1, 0.9)),
+#    Computation_time = runif(12, 0.1, 35)
+# )
 
 # Convert NAs to '-' for LaTeX compatibility
 data[is.na(data)] <- "-"
@@ -273,7 +273,7 @@ xt <- xtable(data,
                              "DMR's (4,000 sites) and the remaining sites are located on",
                              "non DMR sites (90,000 sites). \\textbf{Scenario 4}: NA's",
                              "are located only on potential DMR's (4000 sites)"),
-             label = "tab:methyl2")
+             label = "tab:methyl2",digits=3)
 
 # Print the LaTeX table code
 print(
@@ -284,3 +284,33 @@ print(
       x
    }
 )
+#-----------------
+dim(Y)
+library(reshape2)
+
+df_long <- melt(Y,
+                id.vars = "CellType",
+                variable.name = "Sites",
+                value.name = "MethylationLevel")
+
+
+df_long %>% head()
+dim(df_long)
+length(table(df_long$Var2))
+df_long %>%
+   dplyr::rename(Site = Var2,
+          subject = Var1) %>%
+   mutate(CellType = ifelse(subject<=8, "ES-cell", "Primary")) ->
+   df_long
+   
+# You may need to transform the Sites variable from a factor to a numeric
+#df_long$Sites <- as.numeric(gsub("Site", "", df_long$Sites))
+
+# Create the scatter plot
+ggplot(df_long, aes(x = Site, y = MethylationLevel, color = CellType)) +
+   geom_point() +
+   geom_hex()
+   scale_color_manual(values = c("ES-cell" = "blue", "primary" = "red")) +
+   labs(title = "Not DMR", x = "Sites", y = "Methylation level") +
+   theme_minimal() +
+   theme(plot.title = element_text(hjust = 0.5))

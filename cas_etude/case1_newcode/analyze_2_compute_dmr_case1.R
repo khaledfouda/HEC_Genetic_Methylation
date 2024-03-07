@@ -30,4 +30,5 @@ get_dmr_regions_case1 <-
   }
   return(sequen)
   
- }
+ } 
+ 
