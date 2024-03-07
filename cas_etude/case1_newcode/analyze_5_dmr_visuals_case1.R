@@ -65,6 +65,7 @@ data.frame(
  mutate(dmr = ifelse(dmr %in% ind_dmr, TRUE, FALSE)) ->
  methyl.info
 
+length(ind_dmr) / 1e6
 
 saveRDS(dmr.info, paste0("new_data/case1_dmr_info_", note, ".rds"))
 saveRDS(methyl.info, paste0("new_data/case1_methyl_info_", note, ".rds"))

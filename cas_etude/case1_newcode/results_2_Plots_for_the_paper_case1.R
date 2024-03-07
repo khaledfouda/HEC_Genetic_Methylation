@@ -22,6 +22,7 @@ dmr.info <-
 
 dmr.info %>% summarise_all(length) %>% summarise_all(mean)
 
+head(dmr.info)
 
 dmr.info %>%
    filter(region_length != 0) %>%
@@ -30,7 +31,7 @@ dmr.info %>%
       `Total Number of Sites in the Regions` = sum(region_length)
    ) %>%
    mutate(index = 1) %>%
-   pivot_longer(cols = c(1, 2)) %>%
+   pivot_longer(cols = c(1, 2)) #%>%
    ggplot(aes(x = index, y = value, fill = name)) +
    geom_bar(stat = "identity") +  # Draw the bars
    theme_minimal() +  # Use a minimal theme
@@ -72,7 +73,7 @@ dmr.info %>%
       sd_length = sd(region_length),
       max_length = max(region_length)
    ) %>%
-   ungroup() %>%
+   ungroup() #%>%
    
    ggplot(aes(x = index, y = mean_length)) +
    geom_bar(stat = "identity", fill = "#FFA07A") +
@@ -122,8 +123,8 @@ methyl.info %>%
    mutate(index = 1) %>%
    mutate(dmr = ifelse(
       dmr == TRUE,
-      "Sites in significant regions",
-      "Sites in non significant regions"
+      "DMR sites", #"Sites in significant regions",
+      "non-DMR sites"#"Sites in non significant regions"
    )) %>%
    ggplot(aes(x = Methylation)) +
    geom_density(
@@ -148,8 +149,7 @@ methyl.info %>%
       plot.background = element_blank(),
       panel.grid.minor = element_blank(),
       legend.position = "none"
-   ) -> p4
-p4
+   ) -> p4;p4
 
 ggsave(
    "case1_fig4.png",
@@ -176,7 +176,7 @@ data.frame(x = 1:N,
 
 
 gtitle <-
-   "Manhattan Plot for Methylation Sites at Chromosome 1"
+   "Manhattan Plot for Methylation Levels"
 gnote <-
    paste("Grey line indicates significance threshold at",
          expression(1e-10))
@@ -186,7 +186,7 @@ manh.dat2 %>%
    geom_point(size = 0.5) +
    scale_color_manual(
       values = c("#cc0000", "#FFD07A"),
-      labels = c("Correlated Regions", "Uncorrelated Regions")
+      labels = c("DMR Regions", "non-DMR Regions")
    ) +
    theme_minimal() +
    labs(
@@ -212,8 +212,7 @@ manh.dat2 %>%
       legend.position = "top"  ,
       legend.title =  element_blank(),
       legend.text =  element_text(size = 12, face = "bold")
-   ) -> p5
-p5
+   ) -> p5;p5
 
 
 
@@ -230,7 +229,23 @@ ggsave(
 # Load necessary package
 library(xtable)
 
-# Example dataframe (replace this with your actual data)
+load(paste0(
+   "results/res_case1_",
+   alpha, note, ".Rdata"))
+res
+
+res %>% 
+   mutate(scenario = paste("scenario", scenario),
+          Computation_time = time / 60) %>%
+   dplyr::rename(Method = model,
+          Q2 = R2,
+          Q2_dmr = R2_dmr) %>%
+   mutate_if(is.numeric, round, digits=3) %>%  
+   dplyr::select(scenario, Method, RMSE, Q2, RMSE_dmr,
+          Q2_dmr, Computation_time) -> data
+
+head(data)
+
 data <- data.frame(
    Scenario = rep(c(
       "Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4"
@@ -264,7 +279,7 @@ xt <- xtable(data,
 print(
    xt,
    include.rownames = FALSE,
-   hline.after = c(-1, 0, 3, 6, 9, 12),
+   hline.after = c(-1, 0, 3, 6, 9),#12
    sanitize.text.function = function(x) {
       x
    }
