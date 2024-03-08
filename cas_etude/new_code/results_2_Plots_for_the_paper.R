@@ -51,7 +51,7 @@ readRDS("new_data/Xdat_common_chr1_subset_Blood.rds") %>%
 
 
 x %>% ggplot(aes(x = as.factor(AGE))) +
-   geom_histogram(aes(y = ..count..),
+   geom_histogram(aes(y = after_stat(count)),
                   stat="count", binwidth = 1, fill = "#FFA07A", color = "#FF4500") +  
    theme_minimal() +
    labs(x = "AGE", y = "Count") +
@@ -91,7 +91,7 @@ dmr.info %>%
    labs(
       x = "Chromosome", 
       y = "Count",
-      title = "Correlated Regions by Chromosome"
+      title = "DMR Regions by Chromosome"
       #title = "Distribution of the number of regions and the number of sites within the regions per chromosomes"
    ) +
    theme(
@@ -140,7 +140,7 @@ dmr.info %>%
       legend.position = "none"
    ) +
    labs(
-      title = "Number of Sites per Region by Chromosome",
+      title = "Number of Sites per DMR by Chromosome",
       subtitle = "Black lines represent the mean +/- standard deviation;\nLight bars indicate the maximum number of sites per region;\nDark bars represent the average number of sites per region.",
       x = "Chromosome",
       y = "Number of Sites"
@@ -156,7 +156,8 @@ methyl.info <- readRDS(paste0("new_data/methyl_info_",note, ".rds"))
 methyl.info %>%
    mutate(chromosome = as.numeric(gsub("chr", "", chromosome))) %>%
    arrange(chromosome) %>%
-   mutate(dmr = ifelse(dmr == TRUE, "Sites in significant regions", "Sites in non significant regions")) %>% 
+   mutate(dmr = ifelse(dmr == TRUE, "Sites in DMR",
+                       "Sites in non-DMR")) %>% 
    mutate(chromosome = factor(chromosome)) %>%
    ggplot(aes(x = Methylation, group = chromosome)) +
    geom_density(aes( y=after_stat(scaled)),
@@ -215,7 +216,7 @@ data.frame(x = 1:N, Site= sites, NegLogP = - log10(p_values)) %>%
 #--------------------------------------------------------------------
 
 
-gtitle <- "Manhattan Plot for Methylation Sites at Chromosome 2"
+gtitle <- "Manhattan Plot for Methylation Levels at Chromosome 2"
 gnote <- paste("Grey line indicates significance threshold at", expression(1e-4))
 
 manh.dat2 %>% 
@@ -241,9 +242,9 @@ manh.dat2 %>%
       legend.position = "top"  ,
       legend.title =  element_blank(),
       legend.text =  element_text(size = 12, face = "bold")
-   ) -> p5; #p5
+   ) -> p5; p5
 
-gtitle <- "Manhattan Plot for Methylation Sites at Chromosome 3"
+gtitle <- "Manhattan Plot for Methylation Levels at Chromosome 3"
 
 manh.dat3 %>% 
    ggplot(aes(x = Site, y = NegLogP, color = color)) +  
@@ -266,7 +267,7 @@ manh.dat3 %>%
          legend.position = "top"  ,
          legend.title =  element_blank(),
          legend.text =  element_text(size = 12, face = "bold")
-   ) -> p6; #p6
+   ) -> p6; p6
 
 
 

@@ -294,23 +294,62 @@ df_long <- melt(Y,
                 value.name = "MethylationLevel")
 
 
-df_long %>% head()
-dim(df_long)
-length(table(df_long$Var2))
+#df_long %>% head()
+#dim(df_long)
+#length(table(df_long$Var2))
 df_long %>%
-   dplyr::rename(Site = Var2,
+   mutate(Var2 = as.numeric(as.character(Var2))) %>% 
+   dplyr::rename(order. = Var2,
           subject = Var1) %>%
-   mutate(CellType = ifelse(subject<=8, "ES-cell", "Primary")) ->
+   group_by(subject) %>%
+   arrange(order.) %>%
+   mutate(site = sites) %>%
+   ungroup() %>% 
+   mutate(CellType = ifelse(subject<=8, "ES-cell", "primary")) ->
    df_long
    
-# You may need to transform the Sites variable from a factor to a numeric
+
 #df_long$Sites <- as.numeric(gsub("Site", "", df_long$Sites))
 
-# Create the scatter plot
-ggplot(df_long, aes(x = Site, y = MethylationLevel, color = CellType)) +
-   geom_point() +
-   geom_hex()
-   scale_color_manual(values = c("ES-cell" = "blue", "primary" = "red")) +
+
+10000
+
+yrange = c(12840000,12840000+10000*10)
+yrange = c(119539000-10000*20,119539000+10000*20)
+
+
+df_long %>% 
+   #filter(subject %in% 8:9) %>% 
+   #filter(order. > dmr_range[1], order. < dmr_range[2]) %>% 
+   filter( site > yrange[1], site < yrange[2]) %>% 
+   #sample_n(1e6) %>% 
+ggplot(aes(x = site, y = MethylationLevel, color = CellType)) +
+   geom_point(size = 1, alpha=0.6) +
+   #geom_hex()+
+   scale_color_manual(values = c("ES-cell" = "#349be8", "primary" = "#cc0000")) +
    labs(title = "Not DMR", x = "Sites", y = "Methylation level") +
    theme_minimal() +
    theme(plot.title = element_text(hjust = 0.5))
+
+
+new_dmr = round(ind_dmr/100,0) %>% table()
+
+new_dmr %>% as.data.frame() %>% arrange(desc(Freq)) %>%
+   head(10) %>% dplyr::select(".") -> new_dmr # %>% range()
+dmr_range = range(as.numeric(as.character(new_dmr$.)))
+dmr_range = c(-1,+1) * 100 + dmr_range
+
+methyl.info %>%
+   filter(dmr == TRUE) %>%
+   select(site) %>%
+   mutate(site = round(site/1000,0)) %>% 
+   table() %>%
+   as.data.frame() %>%
+   arrange(desc(Freq)) %>%
+   head(100) %>%
+   dplyr::select(site) -> dmrsites2
+
+yrange = range(as.numeric(as.character(dmrsites2$site))) 
+yrange = c(-1,+1) * 10000 + yrange
+yrange[1] = min(yrange[1],(119539000-10000*20))
+yrange[2] = max(yrange[2],119539000+10000*20)
