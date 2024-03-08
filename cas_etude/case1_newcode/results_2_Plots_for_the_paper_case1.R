@@ -3,12 +3,41 @@ source("new_code/load_files.R")
 library(xtable)
 
 #------------------------------------------
-alphas = c(1e-10)
+alphas = 1e-10
 correction =  function(alpha, N)
    alpha
 note = "alphae10"
 #----------------------------------------------
+source("methyl_func.R")
+sourceAll(path = "../functions/")
 
+## get data from fastgasp article
+load("data/Methylation_level_dense_Chr1.Rda")
+## get identified DMR area
+load(file = "data/area_diff.Rdata")
+load(file = "data/area_hypo.Rdata")
+ind = 1:1e6
+Y = t(seq.data.chr1[ind, ])
+# why were they removed?
+selec = c(1:2, 4:9, 12:14, 16:19)
+
+Y = Y[selec, ]
+colnames(Y) = rownames(Y) = NULL
+X1 = c(rep("Gifford", 8), rep("roadmap1", 7))
+X = c(rep(1, 8), rep(0, 7))
+hist(Index_seq)
+range(Index_seq)
+max(Index_seq) - min(Index_seq)
+sort(Index_seq)[1:10]
+
+
+sites = Index_seq[ind]
+p_values = compute_p_values_case1(Y, sites, X, TRUE, F, alpha, correction =
+                                     F)
+#p_values$color %>% table()
+dmr_regions <- get_dmr_regions_case1(p_values,
+                                     sites,
+                                     alpha, 1e3)
 #-------------------------------------------------------------------------
 #--------------------------------------------------------------------------
 # Fig2:
@@ -123,8 +152,8 @@ methyl.info %>%
    mutate(index = 1) %>%
    mutate(dmr = ifelse(
       dmr == TRUE,
-      "DMR sites", #"Sites in significant regions",
-      "non-DMR sites"#"Sites in non significant regions"
+      "DMRs", #"Sites in significant regions",
+      "non-DMRs"#"Sites in non significant regions"
    )) %>%
    ggplot(aes(x = Methylation)) +
    geom_density(
@@ -174,7 +203,6 @@ data.frame(x = 1:N,
 #---------------------------------------------------------------------
 #--------------------------------------------------------------------
 
-
 gtitle <-
    "Manhattan Plot for Methylation Levels"
 gnote <-
@@ -182,15 +210,16 @@ gnote <-
          expression(1e-10))
 
 manh.dat2 %>%
+   filter(!is.na(NegLogP)) %>% 
    ggplot(aes(x = Site, y = NegLogP, color = color)) +
    geom_point(size = 0.5) +
    scale_color_manual(
       values = c("#cc0000", "#FFD07A"),
-      labels = c("DMR Regions", "non-DMR Regions")
+      labels = c("DMRs", "non-DMRs")
    ) +
    theme_minimal() +
    labs(
-      x = "Methylation Site",
+      x = "Site",
       y = "- Log (P-value)",
       #expression("-log"[10] * "(P-value)"),
       title =  gtitle,

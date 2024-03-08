@@ -51,22 +51,28 @@ readRDS("new_data/Xdat_common_chr1_subset_Blood.rds") %>%
 
 
 x %>% ggplot(aes(x = as.factor(AGE))) +
-   geom_histogram(aes(y = after_stat(count)),
-                  stat="count", binwidth = 1, fill = "#FFA07A", color = "#FF4500") +  
+   geom_bar(aes(y = after_stat(count)),
+                  stat="count", width = 1, fill = "#FFA07A", color = "#FF4500") +  
    theme_minimal() +
-   labs(x = "AGE", y = "Count") +
+   labs(x = "Age", y = "Count") +
    #scale_fill_manual(values = c("lmcc" = "#FFA07A", "mcc" = "#FFD700")) + 
    theme(
-      plot.title = element_text(hjust = 0.5),
-      axis.title.x = element_text(face = "bold"),
-      axis.title.y = element_text(face = "bold"),
+      #panel.grid = element_blank(),
+      plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+      axis.title.x = element_text(size = 12, face = "bold"),
+      axis.title.y = element_text(size = 12, face = "bold"),
+      strip.text = element_text(size = 12, face = "bold"),
+      
+      #plot.title = element_text(hjust = 0.5),
+      #axis.title.x = element_text(face = "bold"),
+      #axis.title.y = element_text(face = "bold"),
       legend.position = "bottom",
       legend.title = element_blank()
    ) +
-   ggtitle("Distribution of age among selected samples") -> p1; p1
+   ggtitle("Distribution of Age Among Selected Samples") -> p1; p1
 
 
-ggsave("case2_fig1.png", p1, width = 5, height = 4, dpi = 300)
+ggsave("case2_fig1.png", p1, width = 8, height = 6, dpi = 300)
 #--------------------------------------------------------------------------
 # Fig2: 
 dmr.info <- readRDS(paste0("new_data/dmr_info_",note, ".rds"))
@@ -91,12 +97,12 @@ dmr.info %>%
    labs(
       x = "Chromosome", 
       y = "Count",
-      title = "DMR Regions by Chromosome"
+      title = "DMRs by Chromosome"
       #title = "Distribution of the number of regions and the number of sites within the regions per chromosomes"
    ) +
    theme(
       #axis.text = element_text(face="bold"),
-      plot.title = element_text(hjust = 0.5, size = 14, face = "bold"), 
+      plot.title = element_text(hjust = 0.5, size = 16, face = "bold"), 
       axis.title.x = element_text(size = 12, face = "bold"), 
       axis.title.y = element_text(size = 12, face = "bold"), 
       strip.background = element_blank(), 
@@ -132,10 +138,10 @@ dmr.info %>%
    ) +
    theme_minimal() +  
    theme(
-      plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+      plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
       axis.title = element_text(size = 12, face = "bold"),
-      axis.title.x = element_text(face = "bold"),
-      axis.title.y = element_text(face = "bold"),
+      axis.title.x = element_text(size=12, face = "bold"),
+      axis.title.y = element_text(size=12, face = "bold"),
       axis.text.x = element_text(angle = 0, hjust = 1),  
       legend.position = "none"
    ) +
@@ -156,8 +162,8 @@ methyl.info <- readRDS(paste0("new_data/methyl_info_",note, ".rds"))
 methyl.info %>%
    mutate(chromosome = as.numeric(gsub("chr", "", chromosome))) %>%
    arrange(chromosome) %>%
-   mutate(dmr = ifelse(dmr == TRUE, "Sites in DMR",
-                       "Sites in non-DMR")) %>% 
+   mutate(dmr = ifelse(dmr == TRUE, "DMRs",
+                       "non-DMRs")) %>% 
    mutate(chromosome = factor(chromosome)) %>%
    ggplot(aes(x = Methylation, group = chromosome)) +
    geom_density(aes( y=after_stat(scaled)),
@@ -220,13 +226,14 @@ gtitle <- "Manhattan Plot for Methylation Levels at Chromosome 2"
 gnote <- paste("Grey line indicates significance threshold at", expression(1e-4))
 
 manh.dat2 %>% 
+   filter(! is.na(NegLogP)) %>% 
    ggplot(aes(x = Site, y = NegLogP, color = color)) +  
    geom_point( size=0.5) +
    scale_color_manual(values = c( "#cc0000","#FFD07A"), 
-                      labels = c("Correlated Regions","Uncorrelated Regions")) + 
+                      labels = c("DMRs","non-DMRs")) + 
    theme_minimal() +
    labs(
-      x = "Methylation Site",
+      x = "Site",
       y = "- Log (P-value)",#expression("-log"[10] * "(P-value)"),
       title =  gtitle,
       subtitle = gnote
@@ -247,13 +254,14 @@ manh.dat2 %>%
 gtitle <- "Manhattan Plot for Methylation Levels at Chromosome 3"
 
 manh.dat3 %>% 
+   filter(!is.na(NegLogP)) %>% 
    ggplot(aes(x = Site, y = NegLogP, color = color)) +  
    geom_point( size=0.5) +
    scale_color_manual(values = c( "#cc0000","#FFD07A"), 
-                      labels = c("Correlated Regions","Uncorrelated Regions")) + 
+                      labels = c("DMRs","non-DMRs")) + 
    theme_minimal() +
    labs(
-      x = "Methylation Site",
+      x = "Site",
       y = "- Log (P-value)", #expression("-log"[10] * "(P-value)"),
       title =  gtitle,
       subtitle = gnote
