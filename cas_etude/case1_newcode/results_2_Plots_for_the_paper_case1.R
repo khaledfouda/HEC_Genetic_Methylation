@@ -3,7 +3,7 @@ source("new_code/load_files.R")
 library(xtable)
 
 #------------------------------------------
-alphas = 1e-10
+alphas = alpha = 1e-10
 correction =  function(alpha, N)
    alpha
 note = "alphae10"
@@ -340,25 +340,53 @@ df_long %>%
 
 #df_long$Sites <- as.numeric(gsub("Site", "", df_long$Sites))
 
-
-10000
-
 yrange = c(12840000,12840000+10000*10)
 yrange = c(119539000-10000*20,119539000+10000*20)
 
+filter(manh.dat2, color=="DMR")$x -> xdmr
+(table(round(xdmr/1000,0)*1000)) %>% as.data.frame %>% arrange(desc(Freq)) %>% 
+   head(10) -> xdmr
+xdmr <- as.numeric(as.character(xdmr$Var1))
+
+#xrange <- xdmr[2] + c(-200,300)
+
+xrange <- xdmr[1] + c(-500,110)  
+xrange2 <- c(1,1000)
 
 df_long %>% 
    #filter(subject %in% 8:9) %>% 
-   #filter(order. > dmr_range[1], order. < dmr_range[2]) %>% 
-   filter( site > yrange[1], site < yrange[2]) %>% 
+   filter( (order. > xrange[1] & order. < xrange[2]) |
+              (order. > xrange2[1] & order. < xrange2[2]))  %>%
+   mutate(categ = order. < xrange2[2]) %>%
+   mutate(categ = ifelse(categ==TRUE, "Not DMR", "DMR")) %>% 
+   #filter( site > yrange[1], site < yrange[2]) %>% 
    #sample_n(1e6) %>% 
 ggplot(aes(x = site, y = MethylationLevel, color = CellType)) +
    geom_point(size = 1, alpha=0.6) +
-   #geom_hex()+
    scale_color_manual(values = c("ES-cell" = "#349be8", "primary" = "#cc0000")) +
-   labs(title = "Not DMR", x = "Sites", y = "Methylation level") +
+   labs(title = "Methylation Pattern", x = "Site", y = "Methylation Level") +
    theme_minimal() +
-   theme(plot.title = element_text(hjust = 0.5))
+   facet_wrap(.~ categ, scales = "free", nrow=2) +
+   guides(colour = guide_legend(override.aes = list(size = 2))) +
+   theme(
+      panel.grid = element_blank(),
+      plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+      axis.title.x = element_text(size = 12, face = "bold"),
+      axis.title.y = element_text(size = 12, face = "bold"),
+      strip.text = element_text(size = 12, face = "bold"),
+      
+      legend.position = "right"  ,
+      legend.title =  element_blank(),
+      legend.text =  element_text(size = 12, face = "bold")
+   ) -> p1; p1
+
+ggsave(
+   "case1_fig1.png",
+   p1,
+   width = 8,
+   height = 6,
+   dpi = 300
+)
 
 
 new_dmr = round(ind_dmr/100,0) %>% table()
