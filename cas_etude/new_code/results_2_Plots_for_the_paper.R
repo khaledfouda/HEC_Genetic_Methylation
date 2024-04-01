@@ -188,7 +188,8 @@ methyl.info %>%
       legend.position = "none" 
    ) -> p4;p4
 
-ggsave("case2_fig4.png", p4, width = 8, height = 6, dpi = 300)  
+ggsave("case2_fig4.eps", p4, width = 8, height = 6, dpi = 300,
+       device = cairo_ps)  
 #------------------------------------------------------------------------
 # figure 5
 

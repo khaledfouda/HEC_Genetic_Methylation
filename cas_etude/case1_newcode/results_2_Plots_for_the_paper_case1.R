@@ -1,7 +1,7 @@
 setwd("/mnt/campus/math/research/kfouda/main/HEC/Melina/latest/cas_etude")
 source("new_code/load_files.R")
 library(xtable)
-
+library(Cairo)
 #------------------------------------------
 alphas = alpha = 1e-10
 correction =  function(alpha, N)
@@ -181,11 +181,12 @@ methyl.info %>%
    ) -> p4;p4
 
 ggsave(
-   "case1_fig4.png",
+   "case1_fig4.eps",
    p4,
    width = 8,
    height = 6,
-   dpi = 300
+   dpi = 300,
+   device = cairo_ps
 )
 #------------------------------------------------------------------------
 # figure 5
@@ -381,11 +382,12 @@ ggplot(aes(x = site, y = MethylationLevel, color = CellType)) +
    ) -> p1; p1
 
 ggsave(
-   "case1_fig1.png",
+   "case1_fig1.eps",
    p1,
    width = 8,
    height = 6,
-   dpi = 300
+   dpi = 300,
+   device = cairo_ps
 )
 
 
