@@ -386,7 +386,7 @@ ggsave(
    p1,
    width = 8,
    height = 6,
-   dpi = 300,
+   #dpi = 300,
    device = cairo_ps
 )
 
